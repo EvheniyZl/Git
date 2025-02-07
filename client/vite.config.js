@@ -11,6 +11,7 @@ export default defineConfig({
       "/api": {
         target: "https://git-9u34.onrender.com",
         changeOrigin: true,
+        secure: false,
       },
     },
   },
