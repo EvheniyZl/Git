@@ -27,23 +27,27 @@ const AddUser = ({ open, setOpen, userData }) => {
 
   const handleOnSubmit = async(data) => {
     try {
-      if(userData){
+      if (userData) {
         const result = await updateUser(data).unwrap();
         toast.success(result?.message);
-        if(userData?._id === user._id){
+        if (userData?._id === user._id) {
           dispatch(setCredentials(result.user));
         }
-      }else{
-        await addNewUser({...data, password: data.email}).unwrap();
+      } else {
+        // Pass the password here
+        await addNewUser({
+          ...data, 
+          password: data.password || data.email,  // Default password if not provided
+        }).unwrap();
         toast.success("New User added successfully");
       }
       setTimeout(() => {
         setOpen(false);
-      },1500);
+      }, 1500);
     } catch (error) {
       toast.error(error?.data?.message || error.message);
     }
-  };
+  };  
 
   return (
     <>
@@ -101,6 +105,19 @@ const AddUser = ({ open, setOpen, userData }) => {
               })}
               error={errors.role ? errors.role.message : ""}
             />
+
+            <Textbox
+              placeholder='Password'
+              type='password'
+              name='password'
+              label='Password'
+              className='w-full rounded'
+              register={register("password", {
+                required: "Password is required!",
+              })}
+              error={errors.password ? errors.password.message : ""}
+            />
+
           </div>
 
           {isLoading || isUpdating ? (
