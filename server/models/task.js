@@ -1,9 +1,13 @@
 import mongoose, { Schema } from "mongoose";
+import moment from 'moment-timezone';
 
 const taskSchema = new Schema(
   {
     title: { type: String, required: true },
-    date: { type: Date, default: new Date() },
+    date: { 
+      type: Date, 
+      default: () => moment().tz("Europe/Kiev").toDate()
+    },
     priority: {
       type: String,
       default: "normal",
@@ -29,7 +33,10 @@ const taskSchema = new Schema(
           ],
         },
         activity: String,
-        date: { type: Date, default: new Date() },
+        date: { 
+          type: Date, 
+          default: () => moment().tz("Europe/Kiev").toDate()
+        },
         by: { type: Schema.Types.ObjectId, ref: "User" },
       },
     ],
@@ -37,7 +44,7 @@ const taskSchema = new Schema(
     subTasks: [
       {
         title: String,
-        date: Date,
+        date: { type: Date, default: () => moment().tz("Europe/Kiev").toDate() },
         tag: String,
       },
     ],

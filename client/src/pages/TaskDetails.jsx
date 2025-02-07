@@ -14,7 +14,6 @@ import {
 import { RxActivityLog } from "react-icons/rx";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { tasks } from "../assets/data";
 import Tabs from "../components/Tabs";
 import { PRIOTITYSTYELS, TASK_TYPE, getInitials } from "../utils";
 import Loading from "../components/Loader";
@@ -134,7 +133,7 @@ const TaskDetails = () => {
                 </div>
 
                 <p className='text-gray-500'>
-                  Created At: {new Date(task?.date).toDateString()}
+                  Created At: {new Date(task?.createdAt).toLocaleString('ru-RU')} (UTC+2)
                 </p>
 
                 <div className='flex items-center gap-8 p-4 border-y border-gray-200'>
@@ -278,8 +277,8 @@ const Activities = ({ activity, id, refetch }) => {
         <div className='flex flex-col gap-y-1 mb-8'>
           <p className='font-semibold'>{item?.by?.name}</p>
           <div className='text-gray-500 space-y-2'>
-            <span className='capitalize'>{item?.type}</span>
-            <span className='text-sm'>{moment(item?.date).fromNow()}</span>
+            <span className='capitalize'>{item?.type} </span>
+            <span className='text-sm'>{moment(item?.date).fromNow()} (UTC+2)</span>
           </div>
           <div className='text-gray-700'>{item?.activity}</div>
         </div>
