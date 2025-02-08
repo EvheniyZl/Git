@@ -13,14 +13,15 @@ export const taskApiSlice = apiSlice.injectEndpoints({
         }),
 
         getAllTask: builder.query({
-            query: ({strQuery, isTrashed, search}) => ({
-                url: `${TASKS_URL}?stage=${strQuery}&isTrashed=${isTrashed}&search=${search}`,
+            query: ({strQuery, isTrashed, search, userId}) => ({
+                url: `${TASKS_URL}?stage=${strQuery}&isTrashed=${isTrashed}&search=${search}&userId=${userId}`,
                 method: "GET",
                 credentials: "include",
             }),
         }),
 
         createTask: builder.mutation({
+
             query: (data) => ({
                 url: `${TASKS_URL}/create`,
                 method: "POST",
