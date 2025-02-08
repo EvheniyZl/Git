@@ -199,30 +199,35 @@ export const dashboardStatistics = async (req, res) => {
 
 export const getTasks = async (req, res) => {
   try {
-    const { stage, isTrashed } = req.query;
+      const { stage, isTrashed, userId } = req.query;
 
-    let query = { isTrashed: isTrashed ? true : false };
+      let query = { isTrashed: isTrashed ? true : false };
 
-    if (stage) {
-      query.stage = stage;
-    }
+      if (stage) {
+          query.stage = stage;
+      }
 
-    let queryResult = Task.find(query)
-      .populate({
-        path: "team",
-        select: "name title email",
-      })
-      .sort({ _id: -1 });
+      // Добавляем фильтрацию по userId, если он передан
+      if (userId) {
+          query.team = { $in: [userId] }; // Фильтруем задачи, где пользователь находится в команде
+      }
 
-    const tasks = await queryResult;
+      let queryResult = Task.find(query)
+          .populate({
+              path: "team",
+              select: "name title email",
+          })
+          .sort({ _id: -1 });
 
-    res.status(200).json({
-      status: true,
-      tasks,
-    });
+      const tasks = await queryResult;
+
+      res.status(200).json({
+          status: true,
+          tasks,
+      });
   } catch (error) {
-    console.log(error);
-    return res.status(400).json({ status: false, message: error.message });
+      console.log(error);
+      return res.status(400).json({ status: false, message: error.message });
   }
 };
 
