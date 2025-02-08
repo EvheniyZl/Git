@@ -50,7 +50,7 @@ export default function ConfirmatioDialog({
                 : "bg-red-600 hover:bg-red-500"
             )}
             onClick={onClick}
-            label={type === "restore" || type === "restoreAll" ? "Restore All" : "Delete All"}
+            label={type === "restore" || type === "restoreAll" ? "Restore All" : "Delete"}
           />
 
 

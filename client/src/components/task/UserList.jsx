@@ -1,23 +1,34 @@
 import { Listbox, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useState } from "react";
 import { BsChevronExpand } from "react-icons/bs";
-import { summary } from "../../assets/data";
 import clsx from "clsx";
 import { getInitials } from "../../utils";
 import { MdCheck } from "react-icons/md";
 import { useGetTeamListQuery } from "../../redux/slices/api/userApiSlice";
 
 const UserList = ({ setTeam, team }) => {
-  const {data, isLoading} = useGetTeamListQuery();
+  const { data, isLoading } = useGetTeamListQuery();
   const [selectedUsers, setSelectedUsers] = useState([]);
 
+  // Обработчик изменения списка пользователей
   const handleChange = (el) => {
-    setSelectedUsers(el);
-    setTeam(el?.map((u) => u._id));
+    const uniqueUsers = Array.from(new Set(el.map((user) => user._id)))  // Получаем только уникальные ID пользователей
+      .map((id) => el.find((user) => user._id === id));  // Возвращаем полные объекты пользователей, уникализированные по ID
+    
+    setSelectedUsers(uniqueUsers);  // Обновляем выбранных пользователей
+    setTeam(uniqueUsers.map((u) => u._id));  // Обновляем состояние с ID пользователей
   };
+
+  // Удаление пользователя из списка выбранных
+  const removeUser = (userToRemove) => {
+    const updatedUsers = selectedUsers.filter((user) => user._id !== userToRemove._id);
+    setSelectedUsers(updatedUsers); // Обновляем состояние
+    setTeam(updatedUsers.map((u) => u._id)); // Обновляем состояние ID
+  };
+
   useEffect(() => {
     if (team?.length < 1) {
-      data && setSelectedUsers([data[0]]);
+      data;
     } else {
       setSelectedUsers(team);
     }
@@ -26,15 +37,13 @@ const UserList = ({ setTeam, team }) => {
   return (
     <div>
       <p className='text-gray-700'>Assign Task To: </p>
-      <Listbox
-        value={selectedUsers}
-        onChange={(el) => handleChange(el)}
-        multiple
-      >
+      <Listbox value={selectedUsers} onChange={(el) => handleChange(el)} multiple>
         <div className='relative mt-1'>
           <Listbox.Button className='relative w-full cursor-default rounded bg-white pl-3 pr-10 text-left px-3 py-2.5 2xl:py-3 border border-gray-300 sm:text-sm'>
             <span className='block truncate'>
-              {selectedUsers?.map((user) => user.name).join(", ")}
+              {selectedUsers?.length > 0
+                ? selectedUsers.map((user) => user.name).join(", ")
+                : "Select User"} {/* Если нет выбранных пользователей, выводим "Select User" */}
             </span>
 
             <span className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2'>
@@ -58,7 +67,7 @@ const UserList = ({ setTeam, team }) => {
                   className={({ active }) =>
                     `relative cursor-default select-none py-2 pl-10 pr-4. ${
                       active ? "bg-amber-100 text-amber-900" : "text-gray-900"
-                    } `
+                    }`
                   }
                   value={user}
                 >
@@ -90,6 +99,26 @@ const UserList = ({ setTeam, team }) => {
           </Transition>
         </div>
       </Listbox>
+
+      {/* Вывод списка выбранных пользователей с кнопкой для их удаления */}
+      {selectedUsers.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-gray-700">Assigned Users:</h3>
+          <ul>
+            {selectedUsers.map((user) => (
+              <li key={user._id} className="flex items-center justify-between">
+                <span>{user.name}</span>
+                <button
+                  onClick={() => removeUser(user)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };

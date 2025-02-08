@@ -74,13 +74,14 @@ const AddTask = ({ open, setOpen, task }) => {
         ? await updateTask({...newData, _id: task._id}).unwrap()
         : await createTask(newData).unwrap();
 
-        if (task?._id) {
-          toast.success("Task updated successfully"); // Выводим сообщение об успешном обновлении
-        } else {
-          toast.success(res.message); // Если задание создается
-        }
+      if (task?._id) {
+        toast.success("Task updated successfully"); // Выводим сообщение об успешном обновлении
+      } else {
+        toast.success(res.message); // Если задание создается
+      }
       setTimeout(() => {
         setOpen(false);
+        window.location.reload(); // Обновляем страницу
       }, 500);
     } catch (err) {
       toast.error(err?.data?.message || err.error);

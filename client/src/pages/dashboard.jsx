@@ -73,7 +73,7 @@ const TaskTable = ({ tasks }) => {
       </td>
       <td className='py-2 hidden md:block'>
         <span className='text-base text-gray-600'>
-          {moment(task?.date).fromNow()}
+          {moment(task?.createdAt).fromNow()}
         </span>
       </td>
     </tr>
@@ -156,6 +156,17 @@ const Dashboard = () => {
       </div>
     );
   const totals = data?.tasks;
+
+  // Функция для расчета количества задач за прошлый месяц
+  const getLastMonthTasksCount = (tasks) => {
+    const startOfLastMonth = moment().subtract(1, 'month').startOf('month');
+    const endOfLastMonth = moment().subtract(1, 'month').endOf('month');
+
+    return tasks.filter(task => 
+      moment(task.date).isBetween(startOfLastMonth, endOfLastMonth, null, '[]')
+    ).length;
+  };
+
   const stats = [
     {
       _id: "1",
@@ -163,6 +174,7 @@ const Dashboard = () => {
       total: data?.totalTasks || 0,
       icon: <FaNewspaper />,
       bg: "bg-[#1d4ed8]",
+      lastMonthCount: getLastMonthTasksCount(data?.last10Task || []),
     },
     {
       _id: "2",
@@ -170,6 +182,7 @@ const Dashboard = () => {
       total: totals["completed"] || 0,
       icon: <MdAdminPanelSettings />,
       bg: "bg-[#0f766e]",
+      lastMonthCount: getLastMonthTasksCount(data?.last10Task.filter(task => task.stage === "completed") || []),
     },
     {
       _id: "3",
@@ -177,6 +190,7 @@ const Dashboard = () => {
       total: totals["in progress"] || 0,
       icon: <LuClipboardEdit />,
       bg: "bg-[#f59e0b]",
+      lastMonthCount: getLastMonthTasksCount(data?.last10Task.filter(task => task.stage === "in progress") || []),
     },
     {
       _id: "4",
@@ -184,16 +198,17 @@ const Dashboard = () => {
       total: totals["todo"],
       icon: <FaArrowsToDot />,
       bg: "bg-[#be185d]" || 0,
+      lastMonthCount: getLastMonthTasksCount(data?.last10Task.filter(task => task.stage === "todo") || []),
     },
   ];
 
-  const Card = ({ label, count, bg, icon }) => {
+  const Card = ({ label, count, bg, icon, lastMonthCount }) => {
     return (
       <div className='w-full h-32 bg-white p-5 shadow-md rounded-md flex items-center justify-between'>
         <div className='h-full flex flex-1 flex-col justify-between'>
           <p className='text-base text-gray-600'>{label}</p>
           <span className='text-2xl font-semibold'>{count}</span>
-          <span className='text-sm text-gray-400'>{"110 last month"}</span>
+          <span className='text-sm text-gray-400'>{`${lastMonthCount} last month`}</span>
         </div>
 
         <div
@@ -210,8 +225,8 @@ const Dashboard = () => {
   return (
     <div className='h-full py-4'>
       <div className='grid grid-cols-1 md:grid-cols-4 gap-5'>
-        {stats.map(({ icon, bg, label, total }, index) => (
-          <Card key={index} icon={icon} bg={bg} label={label} count={total} />
+        {stats.map(({ icon, bg, label, total, lastMonthCount }, index) => (
+          <Card key={index} icon={icon} bg={bg} label={label} count={total} lastMonthCount={lastMonthCount} />
         ))}
       </div>
 
