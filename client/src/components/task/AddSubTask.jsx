@@ -3,21 +3,31 @@ import ModalWrapper from "../ModalWrapper";
 import { Dialog } from "@headlessui/react";
 import Textbox from "../Textbox";
 import Button from "../Button";
+import UserList from "./UserList"; // Import UserList component
 import { useCreateSubTaskMutation } from "../../redux/slices/api/taskApiSlice";
 import { toast } from "sonner";
+import React, { useState } from "react";
+
 
 const AddSubTask = ({ open, setOpen, id }) => {
+  const today = new Date().toISOString().split('T')[0];
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      date: today, // Устанавливаем сегодняшнюю дату по умолчанию
+    },
+  });
 
   const [addSbTask] = useCreateSubTaskMutation();
-  console.log(id);
+  const [team, setTeam] = useState([]); // State for team
+
   const handleOnSubmit = async (data) => {
     try {
-      const res = await addSbTask({ data, id }).unwrap();
+      const res = await addSbTask({ data: { ...data, team }, id }).unwrap(); // Include team in data
       toast.success(res.message);
       setTimeout(() => {
         setOpen(false);
@@ -50,6 +60,8 @@ const AddSubTask = ({ open, setOpen, id }) => {
               })}
               error={errors.title ? errors.title.message : ""}
             />
+
+            <UserList setTeam={setTeam} team={team} /> {/* Add UserList component */}
 
             <div className='flex items-center gap-4'>
               <Textbox

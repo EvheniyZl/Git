@@ -9,7 +9,7 @@ import {
 import { useSelector } from "react-redux";
 import { BGS, PRIOTITYSTYELS, TASK_TYPE, formatDate } from "../utils";
 import TaskDialog from "./task/TaskDialog";
-import { BiMessageAltDetail } from "react-icons/bi";
+import { BiMessageAltDetail, BiPin } from "react-icons/bi";
 import { FaList } from "react-icons/fa";
 import UserInfo from "./UserInfo";
 import { IoMdAdd } from "react-icons/io";
@@ -88,27 +88,59 @@ const TaskCard = ({ task }) => {
 
         {/* sub tasks */}
         {task?.subTasks?.length > 0 ? (
-          <div className='py-4 border-t border-gray-200'>
-            <h5 className='text-base line-clamp-1 text-black'>
-              {task?.subTasks[0].title}
-            </h5>
+  <>
+        <div className="py-4 border-t border-gray-200">
+          {task?.subTasks.map((subTask, index) => (
+            <div key={index} className="mb-4">
+              <h5 className="text-base text-black font-semibold line-clamp-1">
+                <div className='flex gap-1 items-center text-sm '>
+                  <BiPin />
+                  <span>{subTask.title}</span>
+                </div>
+              </h5>
 
-            <div className='p-4 space-x-8'>
-              <span className='text-sm text-gray-600'>
-                {formatDate(new Date(task?.subTasks[0]?.date))}
-              </span>
-              <span className='bg-blue-600/10 px-3 py-1 rounded0full text-blue-700 font-medium'>
-                {task?.subTasks[0].tag}
-              </span>
+
+              <div className='w-full border-t border-gray-200 my-2' />
+              <div className='flex items-center justify-between mb-2'>
+                <div className='flex items-center gap-3'>
+                  <div className='flex gap-1 items-center text-sm text-gray-600'>
+                    {/* Дата задачи */}
+                    <span>{formatDate(new Date(subTask?.date))}</span>
+                  </div>
+                  <div className='flex gap-1 items-center text-sm text-gray-600'>
+                    {/* Тег задачи */}
+                    <span className="bg-blue-600/10 px-3 py-1 rounded-full text-blue-700 font-medium">
+                      {subTask?.tag}
+                    </span>
+                  </div>
+                </div>
+
+                <div className='flex flex-row-reverse'>
+                  {/* Отображение пользователей из команды подзадачи */}
+                  {subTask.team.map((m, index) => (
+                    <div
+                      key={index}
+                      className={clsx(
+                        "w-7 h-7 rounded-full text-white flex items-center justify-center text-sm -mr-1",
+                        BGS[index % BGS?.length]
+                      )}
+                    >
+                      <UserInfo user={m} />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ) : (
-          <>
-            <div className='py-4 border-t border-gray-200'>
-              <span className='text-gray-500'>No Sub Task</span>
-            </div>
-          </>
-        )}
+          ))}
+        </div>
+      </>
+    ) : (
+      <div className="py-4 border-t border-gray-200">
+        <span className="text-gray-500">No Sub Task</span>
+      </div>
+    )}
+
+        
 
         <div className='w-full pb-2'>
           <button
