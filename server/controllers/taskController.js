@@ -257,6 +257,10 @@ export const getTask = async (req, res) => {
       .populate({
         path: "activities.by",
         select: "name",
+      })
+      .populate({
+        path: "subTasks.team", // Добавить populate для подзадач
+        select: "name title role email" // Замените на необходимые поля
       });
 
     res.status(200).json({
