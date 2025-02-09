@@ -76,6 +76,12 @@ export const duplicateTask = async (req, res) => {
 
     await newTask.save();
 
+    // Добавляем задачу в массив задач каждого пользователя
+    await User.updateMany(
+      { _id: { $in: task.team } },
+      { $push: { tasks: newTask._id } }
+    );
+
     //alert users of the task
     let text = "New task has been assigned to you";
     if (task.team.length > 1) {
@@ -102,6 +108,7 @@ export const duplicateTask = async (req, res) => {
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+
 
 export const postTaskActivity = async (req, res) => {
   try {
@@ -293,6 +300,7 @@ export const updateTask = async (req, res) => {
 
     const task = await Task.findById(id);
 
+    const oldTeam = task.team;
     task.title = title;
     task.date = date;
     task.priority = priority.toLowerCase();
@@ -302,14 +310,25 @@ export const updateTask = async (req, res) => {
 
     await task.save();
 
+    // Обновляем массив задач пользователей
+    await User.updateMany(
+      { tasks: id },
+      { $pull: { tasks: id } }
+    );
+    await User.updateMany(
+      { _id: { $in: team } },
+      { $push: { tasks: id } }
+    );
+
     res
       .status(200)
-      .json({ status: true, message: "Task duplicated successfully." });
+      .json({ status: true, message: "Task updated successfully." });
   } catch (error) {
     console.log(error);
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+
 
 export const trashTask = async (req, res) => {
   try {
@@ -336,15 +355,28 @@ export const deleteRestoreTask = async (req, res) => {
     const { id } = req.params;
     const { actionType } = req.query;
 
+    const task = await Task.findById(id);
+
     if (actionType === "delete") {
+      // Удаляем задачу
       await Task.findByIdAndDelete(id);
+
+      // Удаляем задачу из массива задач пользователя
+      await User.updateMany(
+        { tasks: id },
+        { $pull: { tasks: id } }
+      );
     } else if (actionType === "deleteAll") {
+      // Удаляем все задачи в корзине и обновляем пользователей
       await Task.deleteMany({ isTrashed: true });
+      await User.updateMany(
+        { tasks: { $in: (await Task.find({ isTrashed: true })).map(task => task._id) } },
+        { $pull: { tasks: { $in: (await Task.find({ isTrashed: true })).map(task => task._id) } } }
+      );
     } else if (actionType === "restore") {
       const resp = await Task.findById(id);
-
       resp.isTrashed = false;
-      resp.save();
+      await resp.save();
     } else if (actionType === "restoreAll") {
       await Task.updateMany(
         { isTrashed: true },
