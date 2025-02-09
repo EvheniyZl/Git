@@ -45,6 +45,7 @@ const taskSchema = new Schema(
       {
         title: String,
         date: { type: Date, default: () => moment().tz("Europe/Kiev").toDate() },
+        team: [{ type: Schema.Types.ObjectId, ref: "User" }],
         tag: String,
       },
     ],

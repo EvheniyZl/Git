@@ -271,11 +271,12 @@ export const getTask = async (req, res) => {
 
 export const createSubTask = async (req, res) => {
   try {
-    const { title, tag, date } = req.body;
+    const { title, team, tag, date } = req.body;
     const { id } = req.params;
 
     const newSubTask = {
       title,
+      team,
       date,
       tag,
     };
