@@ -231,7 +231,12 @@ export const getTasks = async (req, res) => {
               path: "team",
               select: "name title email",
           })
-          .sort({ _id: -1 });
+          .sort({ _id: -1 })
+
+          .populate({
+            path: "subTasks.team", // Добавить populate для подзадач
+            select: "name title role email" // Замените на необходимые поля
+          }).sort({ _id: -1 });
 
       const tasks = await queryResult;
 
