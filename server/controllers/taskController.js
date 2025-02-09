@@ -1,60 +1,51 @@
 import Notice from "../models/notification.js";
 import Task from "../models/task.js";
 import User from "../models/user.js";
-import moment from "moment-timezone";
 
 export const createTask = async (req, res) => {
   try {
     const { userId } = req.user;
-    const { team, stage, date, priority, assets } = req.body;
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ status: false, message: "User not found" });
+    const { title, team, stage, date, priority, assets } = req.body;
+
+    const fullDate = new Date(date);
+
+    let text = "New task has been assigned to you";
+    if (team?.length > 1) {
+      text = text + ` and ${team?.length - 1} others.`;
     }
 
-    // Определяем начало месяца
-    const currentDate = moment(date).tz("Europe/Kiev");
-    const startOfMonth = currentDate.clone().startOf("month");
-    const endOfMonth = currentDate.clone().endOf("month");
+    text =
+      text +
+      ` The task priority is set a ${priority} priority, so check and act accordingly. The task date is ${new Date(
+        date
+      ).toDateString()}. Thank you!!!`;
 
-    // Считаем количество задач пользователя за текущий месяц
-    const taskCount = await Task.countDocuments({
-      team: { $in: [userId] },
-      date: { $gte: startOfMonth.toDate(), $lte: endOfMonth.toDate() },
-    });
+    const activity = {
+      type: "assigned",
+      activity: text,
+      by: userId,
+    };
 
-    // Генерируем TITLE
-    const taskNumber = taskCount + 1;
-    const formattedDate = currentDate.format("DD/MM/YYYY, h:mm A");
-    const title = `#${taskNumber}, ${formattedDate}`;
-
-    // Создаем задачу
-    const newTask = await Task.create({
+    const task = await Task.create({
       title,
       team,
       stage: stage.toLowerCase(),
-      date,
+      date: fullDate,
       priority: priority.toLowerCase(),
       assets,
-      activities: [
-        {
-          type: "assigned",
-          activity: `New task assigned. Priority: ${priority.toUpperCase()}. Date: ${formattedDate}`,
-          by: userId,
-        },
-      ],
+      activities: activity,
     });
 
-    // Уведомление
     await Notice.create({
       team,
-      text: `Task "${title}" assigned.`,
-      task: newTask._id,
+      text,
+      task: task._id,
     });
 
-    res.status(200).json({ status: true, task: newTask, message: "Task created successfully." });
-
+    res
+      .status(200)
+      .json({ status: true, task, message: "Task created successfully." });
   } catch (error) {
     console.log(error);
     return res.status(400).json({ status: false, message: error.message });
