@@ -7,15 +7,14 @@ import {
   MdKeyboardDoubleArrowUp,
   MdOutlineRestore,
 } from "react-icons/md";
-import { tasks } from "../assets/data";
 import Title from "../components/Title";
 import Button from "../components/Button";
 import { PRIOTITYSTYELS, TASK_TYPE } from "../utils";
-import AddUser from "../components/AddUser";
 import ConfirmatioDialog from "../components/Dialogs";
 import { useDeleteRestoreMutation, useGetAllTaskQuery } from "../redux/slices/api/taskApiSlice";
 import Loading from "../components/Loader";
 import { toast } from "sonner";
+import { useGetTeamListQuery } from "../redux/slices/api/userApiSlice";  // Импорт для получения списка пользователей
 
 const ICONS = {
   high: <MdKeyboardDoubleArrowUp />,
@@ -29,12 +28,16 @@ const Trash = () => {
   const [msg, setMsg] = useState(null);
   const [type, setType] = useState("delete");
   const [selected, setSelected] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState(""); // Добавляем состояние для фильтра по пользователю
 
   const {data, isLoading, refetch} = useGetAllTaskQuery({
     strQuery: "", 
     isTrashed: "true", 
     search: "",
+    userId: selectedUserId,
   });
+
+  const { data: teamData } = useGetTeamListQuery();  // Получаем список пользователей
 
   const [deleteRestoreTask] = useDeleteRestoreMutation();
 
@@ -172,6 +175,26 @@ const Trash = () => {
             />
           </div>
         </div>
+
+        {/* Фильтр по пользователю */}
+        <div className="mb-4">
+          <label htmlFor="userFilter" className="mr-2">Filter by user:</label>
+          <select
+            id="userFilter"
+            value={selectedUserId}
+            onChange={(e) => setSelectedUserId(e.target.value)}
+            className="p-2 border rounded"
+          >
+            <option value="">All Users</option>
+            {teamData?.map((user) => (
+              <option key={user._id} value={user._id}>
+                {user.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+
         <div className='bg-white px-2 md:px-6 py-4 shadow-md rounded'>
           <div className='overflow-x-auto'>
             <table className='w-full mb-5'>

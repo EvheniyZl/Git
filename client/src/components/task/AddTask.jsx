@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ModalWrapper from "../ModalWrapper";
 import { Dialog } from "@headlessui/react";
 import Textbox from "../Textbox";
@@ -9,7 +9,7 @@ import { BiImages } from "react-icons/bi";
 import Button from "../Button";
 import {getStorage, ref, getDownloadURL, uploadBytesResumable} from "firebase/storage";
 import { app } from "../../utils/firebase";
-import { useCreateTaskMutation, useUpdateTaskMutation } from "../../redux/slices/api/taskApiSlice";
+import { useCreateTaskMutation, useGetDashboardStatsQuery, useUpdateTaskMutation } from "../../redux/slices/api/taskApiSlice";
 import { toast } from "sonner";
 import { dateFormatter } from "../../utils";
 
@@ -18,7 +18,7 @@ const PRIORIRY = ["HIGH", "MEDIUM", "NORMAL", "LOW"];
 
 const uploadedFileURLs = [];
 
-const AddTask = ({ open, setOpen, task }) => {
+const AddTask = ({ open, setOpen, task, totalTasks }) => {
 
   const defaultValues = {
     title: task?.title || "",
@@ -33,9 +33,34 @@ const AddTask = ({ open, setOpen, task }) => {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
   } = useForm({ defaultValues });
 
+  // Состояние для отслеживания изменения названия
+  const [isTitleUpdated, setIsTitleUpdated] = useState(false);
 
+  const {data, isLoadinging} = useGetDashboardStatsQuery();
+
+  if(isLoadinging)
+    return (
+      <div className='w-full h-full flex items-center justify-center'>
+        <Loading />
+      </div>
+    );
+
+  useEffect(() => {
+    // Устанавливаем текущее время в title только если это новая задача
+    if (!task && !isTitleUpdated) {
+      const now = new Date();
+      const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}, ${now.getHours() % 12 || 12}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
+      
+      // Формируем номер задачи: #1, 09/02/2025, 8:07 PM
+      const taskNumber = `#${data?.totalTasks + 1}, ${formattedDate}`;
+      
+      setValue("title", taskNumber); // Устанавливаем это время в поле title
+      setIsTitleUpdated(true); // Помечаем, что title уже обновлено
+    }
+  }, [task, isTitleUpdated, setValue, totalTasks]);
 
   const [team, setTeam] = useState(task?.team || []);
   const [stage, setStage] = useState(task?.stage?.toUpperCase() || LISTS[0]);
@@ -141,15 +166,15 @@ const AddTask = ({ open, setOpen, task }) => {
           </Dialog.Title>
 
           <div className='mt-2 flex flex-col gap-6'>
-            <Textbox
-              placeholder='Task Title'
-              type='text'
-              name='title'
-              label='Task Title'
-              className='w-full rounded'
-              register={register("title", { required: "Title is required" })}
-              error={errors.title ? errors.title.message : ""}
-            />
+          <Textbox
+            value={defaultValues.title} // Значение title не изменяется, если задача обновляется
+            type="text"
+            name="title"
+            label="Task Title"
+            className="w-full rounded"
+            register={register("title", { required: "Title is required" })}
+            error={errors.title ? errors.title.message : ""}
+          />
 
             <UserList setTeam={setTeam} team={team} />
 
