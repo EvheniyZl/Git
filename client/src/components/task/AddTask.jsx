@@ -39,28 +39,21 @@ const AddTask = ({ open, setOpen, task, totalTasks }) => {
   // Состояние для отслеживания изменения названия
   const [isTitleUpdated, setIsTitleUpdated] = useState(false);
 
-  const {data, isLoadinging} = useGetDashboardStatsQuery();
-
-  if(isLoadinging)
-    return (
-      <div className='w-full h-full flex items-center justify-center'>
-        <Loading />
-      </div>
-    );
+  const { data: dashboardData, isLoading: isDashboardLoading } = useGetDashboardStatsQuery();
 
   useEffect(() => {
-    // Устанавливаем текущее время в title только если это новая задача
-    if (!task && !isTitleUpdated) {
+    // Only update title for new tasks and when dashboard data is available
+    if (!task && !isTitleUpdated && dashboardData?.totalTasks !== undefined) {
       const now = new Date();
       const formattedDate = `${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}, ${now.getHours() % 12 || 12}:${now.getMinutes().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`;
       
-      // Формируем номер задачи: #1, 09/02/2025, 8:07 PM
-      const taskNumber = `#${data?.totalTasks + 1}, ${formattedDate}`;
+      // Make sure we're using the actual number from the dashboard data
+      const taskNumber = `#${(dashboardData.totalTasks + 1)}, ${formattedDate}`;
       
-      setValue("title", taskNumber); // Устанавливаем это время в поле title
-      setIsTitleUpdated(true); // Помечаем, что title уже обновлено
+      setValue("title", taskNumber);
+      setIsTitleUpdated(true);
     }
-  }, [task, isTitleUpdated, setValue, totalTasks]);
+  }, [task, isTitleUpdated, setValue, dashboardData]);
 
   const [team, setTeam] = useState(task?.team || []);
   const [stage, setStage] = useState(task?.stage?.toUpperCase() || LISTS[0]);
