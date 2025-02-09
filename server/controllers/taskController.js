@@ -8,8 +8,6 @@ export const createTask = async (req, res) => {
 
     const { title, team, stage, date, priority, assets } = req.body;
 
-    const fullDate = new Date(date);
-
     let text = "New task has been assigned to you";
     if (team?.length > 1) {
       text = text + ` and ${team?.length - 1} others.`;
@@ -31,7 +29,7 @@ export const createTask = async (req, res) => {
       title,
       team,
       stage: stage.toLowerCase(),
-      date: fullDate,
+      date,
       priority: priority.toLowerCase(),
       assets,
       activities: activity,
