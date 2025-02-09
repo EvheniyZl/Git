@@ -35,6 +35,13 @@ export const createTask = async (req, res) => {
       activities: activity,
     });
 
+    // Обновляем пользователя, добавляя задачу в его список
+    await User.findByIdAndUpdate(
+      userId, 
+      { $push: { tasks: task._id } },
+      { new: true }
+    );
+
     await Notice.create({
       team,
       text,
