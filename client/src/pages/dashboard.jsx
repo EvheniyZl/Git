@@ -9,7 +9,6 @@ import { LuClipboardEdit } from "react-icons/lu";
 import { FaNewspaper, FaUsers } from "react-icons/fa";
 import { FaArrowsToDot } from "react-icons/fa6";
 import moment from "moment";
-import { summary } from "../assets/data";
 import clsx from "clsx";
 import { Chart } from "../components/Chart";
 import { BGS, PRIOTITYSTYELS, TASK_TYPE, getInitials } from "../utils";
@@ -195,7 +194,7 @@ const Dashboard = () => {
     {
       _id: "4",
       label: "TODOS",
-      total: totals["todo"],
+      total: totals["todo"]  || 0,
       icon: <FaArrowsToDot />,
       bg: "bg-[#be185d]" || 0,
       lastMonthCount: getLastMonthTasksCount(data?.last10Task.filter(task => task.stage === "todo") || []),
