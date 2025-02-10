@@ -16,7 +16,8 @@ import UserInfo from "./UserInfo";
 import { IoMdAdd } from "react-icons/io";
 import AddSubTask from "./task/AddSubTask";
 import { RiDeleteBin6Line } from "react-icons/ri";
-import { useDeleteSubTaskMutation, useUpdateSubTaskMutation } from "../redux/slices/api/taskApiSlice";
+import EditSubTask from "./task/EditSubTask";
+import { useDeleteSubTaskMutation } from "../redux/slices/api/taskApiSlice";
 import { toast } from "sonner";
 
 const ICONS = {
@@ -29,35 +30,38 @@ const TaskCard = ({ task }) => {
   const { user } = useSelector((state) => state.auth);
   const [open, setOpen] = useState(false);
   const [subTasksOpen, setSubTasksOpen] = useState(false); // Состояние для открытия подзадач
+  const [subTaskToEdit, setSubTaskToEdit] = useState(null); // Для редактирования подзадачи
+  const [deleteSubTask] = useDeleteSubTaskMutation();
+
 
   // Обработчик клика по стрелке
   const toggleSubTasks = () => {
     setSubTasksOpen(!subTasksOpen);
   };
 
-  const [editSubTask, setEditSubTask] = useState(null); // Состояние для редактирования подзадачи
-
-  const [updateSubTask] = useUpdateSubTaskMutation(); // Хук для обновления подзадачи
-
   const handleEditSubTask = (subTask) => {
-    setEditSubTask(subTask); // Открываем форму редактирования с выбранной подзадачей
-    setOpen(true); // Открываем модальное окно
+    setSubTaskToEdit(subTask); // Устанавливаем подзадачу для редактирования
+    setOpen(true); // Открываем модальное окно редактирования
   };
 
-  const [deleteSubTask] = useDeleteSubTaskMutation(); // Hook to delete subtask
+  const handleAddSubTask = () => {
+    setSubTaskToEdit(null); // Сбрасываем состояние редактируемой подзадачи
+    setOpen(true); // Открываем модальное окно добавления подзадачи
+  };
 
   const handleDeleteSubTask = async (subTaskId) => {
     try {
-      // Call the mutation to delete the subtask
-      const res = await deleteSubTask({
-        taskId: task._id,
-        subTaskId,
-      }).unwrap(); // unwrap to get the result
-      toast.success(res.message); // Show success toast
+      const res = await deleteSubTask({ taskId: task._id, subTaskId }).unwrap();
+      toast.success(res.message); // Show success message
+      setTimeout(() => {
+        window.location.reload(); // Reload the page after 500ms
+      }, 500);
     } catch (err) {
-      toast.error(err?.data?.message || err.error); // Show error toast if failed
+      console.log(err);
+      toast.error(err?.data?.message || err.error); // Show error message
     }
   };
+  
 
   return (
     <>
@@ -130,24 +134,19 @@ const TaskCard = ({ task }) => {
               </h5>
 
               <div className="flex gap-2">      
-              </div>
+      </div>
             </div>
             {subTasksOpen &&
               task?.subTasks.map((subTask, index) => (
                 <div key={index} className="mb-4">
-                  <h5 className="text-base text-black font-semibold line-clamp-1">
-                    <div className='flex gap-1 items-center text-sm '>
-                      <BiPin />
-                      <span>{subTask.title}</span>
-                      <MdOutlineEdit
-                      onClick={() => handleEditSubTask(subTask)}
-                      className="cursor-pointer text-blue-500"
-                      />
-                      <RiDeleteBin6Line
-                      onClick={() => handleDeleteSubTask(subTask._id)}className="cursor-pointer text-red-500"
-                      />
-                    </div>
-                  </h5>
+                  <h5 className="text-base text-black font-semibold">
+                  <div className="flex gap-1 items-center text-sm">
+                    <BiPin className="flex-shrink-0" />
+                    <span className="overflow-ellipsis overflow-hidden">{subTask.title}</span>
+                  </div>
+                </h5>
+
+
                   <div className='w-full border-t border-gray-200 my-2' />
                   <div className='flex items-center justify-between mb-2'>
                     <div className='flex items-center gap-3'>
@@ -155,11 +154,17 @@ const TaskCard = ({ task }) => {
                         <span>{formatDate(new Date(subTask?.date))}</span>
                       </div>
                       <div className='flex gap-1 items-center text-sm text-gray-600'>
-                        <span className="bg-blue-600/10 px-3 py-1 rounded-full text-blue-700 font-medium">
+                      <MdOutlineEdit onClick={() => handleEditSubTask(subTask)} className="cursor-pointer text-blue-500"/>
+                      <RiDeleteBin6Line
+                      onClick={() => handleDeleteSubTask(subTask._id)}className="cursor-pointer text-red-500"
+                      />
+                        {/* <span className="bg-blue-600/10 px-3 py-1 rounded-full text-blue-700 font-medium">
                           {subTask?.tag}
-                        </span>
+                        </span> */}
+
                       </div>
                     </div>
+
                     <div className='flex flex-row-reverse'>
                       {subTask.team.map((m, index) => (
                         <div
@@ -182,28 +187,18 @@ const TaskCard = ({ task }) => {
             <span className="text-gray-500">No Sub Task</span>
           </div>
         )}
-
         <div className='w-full pb-2'>
-          <button
-            onClick={() => setOpen(true)}
-            disabled={user.isAdmin ? false : true}
-            className='w-full flex gap-4 items-center text-sm text-gray-500 font-semibold disabled:cursor-not-allowed disabled::text-gray-300'
-          >
-            <IoMdAdd className='text-lg' />
-            <span>ADD SUBTASK</span>
+          <button onClick={handleAddSubTask} className="flex items-center">
+            <IoMdAdd />
+            <span className="ml-2">Add Subtask</span>
           </button>
         </div>
       </div>
-
-      {editSubTask && (
-          <AddSubTask
-            open={open}
-            setOpen={setOpen}
-            id={task._id}
-            subTask={editSubTask} // Передаем данные подзадачи в AddSubTask
-            updateMode={true} // Флаг для редактирования
-          />
-        )}
+      {subTaskToEdit ? (
+        <EditSubTask open={open} setOpen={setOpen} id={task._id} subTask={subTaskToEdit} />
+      ) : (
+        <AddSubTask open={open} setOpen={setOpen} id={task._id} />
+      )}
     </>
   );
 };
