@@ -2,6 +2,7 @@ import express from "express";
 import {
   createSubTask,
   updateSubTask,
+  deleteSubTask,
   createTask,
   dashboardStatistics,
   deleteRestoreTask,
@@ -26,6 +27,7 @@ router.get("/:id", protectRoute, getTask);
 
 router.put("/create-subtask/:id", protectRoute, isAdminRoute, createSubTask);
 router.put("/update-subtask/:id/:subTaskId", protectRoute, isAdminRoute, updateSubTask);
+router.delete("/delete-subtask/:id/:subTaskId", protectRoute, isAdminRoute, deleteSubTask);
 router.put("/update/:id", protectRoute, isAdminRoute, updateTask);
 router.put("/:id", protectRoute, isAdminRoute, trashTask);
 

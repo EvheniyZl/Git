@@ -16,6 +16,8 @@ import UserInfo from "./UserInfo";
 import { IoMdAdd } from "react-icons/io";
 import AddSubTask from "./task/AddSubTask";
 import { RiDeleteBin6Line } from "react-icons/ri";
+import { useDeleteSubTaskMutation, useUpdateSubTaskMutation } from "../redux/slices/api/taskApiSlice";
+import { toast } from "sonner";
 
 const ICONS = {
   high: <MdKeyboardDoubleArrowUp />,
@@ -31,6 +33,30 @@ const TaskCard = ({ task }) => {
   // Обработчик клика по стрелке
   const toggleSubTasks = () => {
     setSubTasksOpen(!subTasksOpen);
+  };
+
+  const [editSubTask, setEditSubTask] = useState(null); // Состояние для редактирования подзадачи
+
+  const [updateSubTask] = useUpdateSubTaskMutation(); // Хук для обновления подзадачи
+
+  const handleEditSubTask = (subTask) => {
+    setEditSubTask(subTask); // Открываем форму редактирования с выбранной подзадачей
+    setOpen(true); // Открываем модальное окно
+  };
+
+  const [deleteSubTask] = useDeleteSubTaskMutation(); // Hook to delete subtask
+
+  const handleDeleteSubTask = async (subTaskId) => {
+    try {
+      // Call the mutation to delete the subtask
+      const res = await deleteSubTask({
+        taskId: task._id,
+        subTaskId,
+      }).unwrap(); // unwrap to get the result
+      toast.success(res.message); // Show success toast
+    } catch (err) {
+      toast.error(err?.data?.message || err.error); // Show error toast if failed
+    }
   };
 
   return (
@@ -104,7 +130,7 @@ const TaskCard = ({ task }) => {
               </h5>
 
               <div className="flex gap-2">      
-      </div>
+              </div>
             </div>
             {subTasksOpen &&
               task?.subTasks.map((subTask, index) => (
@@ -114,16 +140,14 @@ const TaskCard = ({ task }) => {
                       <BiPin />
                       <span>{subTask.title}</span>
                       <MdOutlineEdit
-          onClick={() => handleEditSubTask(subTask)}
-          className="cursor-pointer text-blue-500"
-        />
-        <RiDeleteBin6Line
-          onClick={() => handleDeleteSubTask(subTask._id)}
-          className="cursor-pointer text-red-500"
-        />
+                      onClick={() => handleEditSubTask(subTask)}
+                      className="cursor-pointer text-blue-500"
+                      />
+                      <RiDeleteBin6Line
+                      onClick={() => handleDeleteSubTask(subTask._id)}className="cursor-pointer text-red-500"
+                      />
                     </div>
                   </h5>
-
                   <div className='w-full border-t border-gray-200 my-2' />
                   <div className='flex items-center justify-between mb-2'>
                     <div className='flex items-center gap-3'>
@@ -136,7 +160,6 @@ const TaskCard = ({ task }) => {
                         </span>
                       </div>
                     </div>
-
                     <div className='flex flex-row-reverse'>
                       {subTask.team.map((m, index) => (
                         <div
@@ -172,7 +195,15 @@ const TaskCard = ({ task }) => {
         </div>
       </div>
 
-      <AddSubTask open={open} setOpen={setOpen} id={task._id} />
+      {editSubTask && (
+          <AddSubTask
+            open={open}
+            setOpen={setOpen}
+            id={task._id}
+            subTask={editSubTask} // Передаем данные подзадачи в AddSubTask
+            updateMode={true} // Флаг для редактирования
+          />
+        )}
     </>
   );
 };
