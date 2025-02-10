@@ -65,6 +65,23 @@ export const taskApiSlice = apiSlice.injectEndpoints({
             }),
         }),
 
+        updateSubTask: builder.mutation({
+            query: ({ data, taskId, subTaskId }) => ({
+                url: `${TASKS_URL}/update-subtask/${taskId}/${subTaskId}`,
+                method: "PUT",
+                body: data,
+                credentials: "include",
+            }),
+        }),
+
+        deleteSubTask: builder.mutation({
+            query: ({ taskId, subTaskId }) => ({
+                url: `${TASKS_URL}/delete-subtask/${taskId}/${subTaskId}`,
+                method: "DELETE",
+                credentials: "include",
+            }),
+        }),
+
         getSingleTask: builder.query({
             query: (id) => ({
                 url: `${TASKS_URL}/${id}`,
@@ -103,4 +120,6 @@ export const {
     useGetSingleTaskQuery,
     usePostTaskActivityMutation,
     useDeleteRestoreMutation,
+    useUpdateSubTaskMutation, // Added updateSubTask hook
+    useDeleteSubTaskMutation,
 } = taskApiSlice;

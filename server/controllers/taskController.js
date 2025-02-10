@@ -303,6 +303,61 @@ export const createSubTask = async (req, res) => {
   }
 };
 
+export const updateSubTask = async (req, res) => {
+  try {
+    const { id, subTaskId } = req.params;
+    const { title, team, tag, date } = req.body;
+
+    const task = await Task.findById(id);
+
+    const subTaskIndex = task.subTasks.findIndex(subTask => subTask._id.toString() === subTaskId);
+    
+    if (subTaskIndex === -1) {
+      return res.status(404).json({ status: false, message: "Subtask not found." });
+    }
+
+    const updatedSubTask = {
+      ...task.subTasks[subTaskIndex],
+      title,
+      team,
+      tag,
+      date,
+    };
+
+    task.subTasks[subTaskIndex] = updatedSubTask;
+
+    await task.save();
+
+    res.status(200).json({ status: true, message: "SubTask updated successfully." });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
+  }
+};
+
+export const deleteSubTask = async (req, res) => {
+  try {
+    const { id, subTaskId } = req.params;
+
+    const task = await Task.findById(id);
+
+    const subTaskIndex = task.subTasks.findIndex(subTask => subTask._id.toString() === subTaskId);
+    
+    if (subTaskIndex === -1) {
+      return res.status(404).json({ status: false, message: "Subtask not found." });
+    }
+
+    task.subTasks.splice(subTaskIndex, 1);
+
+    await task.save();
+
+    res.status(200).json({ status: true, message: "SubTask deleted successfully." });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
+  }
+};
+
 export const updateTask = async (req, res) => {
   try {
     const { id } = req.params;
