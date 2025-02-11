@@ -47,6 +47,11 @@ const taskSchema = new Schema(
         date: { type: Date, default: () => moment().tz("Europe/Kiev").toDate() },
         team: [{ type: Schema.Types.ObjectId, ref: "User" }],
         tag: String,
+        stage: {
+          type: String,
+          default: "todo", // Default stage for subtasks
+          enum: ["todo", "in progress", "completed"], // Valid stages for subtasks
+        },
       },
     ],
     assets: [String],

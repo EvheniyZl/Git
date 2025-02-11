@@ -35,7 +35,6 @@ export const createTask = async (req, res) => {
       activities: activity,
     });
 
-    // Обновляем пользователя, добавляя задачу в его список
     await User.findByIdAndUpdate(
       userId, 
       { $push: { tasks: task._id } },
@@ -76,13 +75,11 @@ export const duplicateTask = async (req, res) => {
 
     await newTask.save();
 
-    // Добавляем задачу в массив задач каждого пользователя
     await User.updateMany(
       { _id: { $in: task.team } },
       { $push: { tasks: newTask._id } }
     );
 
-    //alert users of the task
     let text = "New task has been assigned to you";
     if (task.team.length > 1) {
       text = text + ` and ${task.team.length - 1} others.`;
@@ -165,7 +162,6 @@ export const dashboardStatistics = async (req, res) => {
       .limit(10)
       .sort({ _id: -1 });
 
-    //   group task by stage and calculate counts
     const groupTaskks = allTasks.reduce((result, task) => {
       const stage = task.stage;
 
@@ -178,7 +174,6 @@ export const dashboardStatistics = async (req, res) => {
       return result;
     }, {});
 
-    // Group tasks by priority
     const groupData = Object.entries(
       allTasks.reduce((result, task) => {
         const { priority } = task;
@@ -188,7 +183,6 @@ export const dashboardStatistics = async (req, res) => {
       }, {})
     ).map(([name, total]) => ({ name, total }));
 
-    // calculate total tasks
     const totalTasks = allTasks?.length;
     const last10Task = allTasks?.slice(0, 10);
 
@@ -221,7 +215,6 @@ export const getTasks = async (req, res) => {
           query.stage = stage;
       }
 
-      // Добавляем фильтрацию по userId, если он передан
       if (userId) {
           query.team = { $in: [userId] }; // Фильтруем задачи, где пользователь находится в команде
       }
@@ -236,7 +229,9 @@ export const getTasks = async (req, res) => {
           .populate({
             path: "subTasks.team", // Добавить populate для подзадач
             select: "name title role email" // Замените на необходимые поля
-          }).sort({ _id: -1 });
+          })
+          .select("subTasks.stage")
+          .sort({ _id: -1 });
 
       const tasks = await queryResult;
 
@@ -266,7 +261,8 @@ export const getTask = async (req, res) => {
       .populate({
         path: "subTasks.team", // Добавить populate для подзадач
         select: "name title role email" // Замените на необходимые поля
-      });
+      })
+      .select("subTasks.stage")
 
     res.status(200).json({
       status: true,
@@ -280,7 +276,7 @@ export const getTask = async (req, res) => {
 
 export const createSubTask = async (req, res) => {
   try {
-    const { title, team, tag, date } = req.body;
+    const { title, team, tag, date, stage } = req.body;
     const { id } = req.params;
 
     const newSubTask = {
@@ -288,6 +284,7 @@ export const createSubTask = async (req, res) => {
       team,
       date,
       tag,
+      stage: stage.toLowerCase() || "todo",
     };
 
     const task = await Task.findById(id);
@@ -306,7 +303,7 @@ export const createSubTask = async (req, res) => {
 export const updateSubTask = async (req, res) => {
   try {
     const { id, subTaskId } = req.params;
-    const { title, team, tag, date } = req.body;
+    const { title, team, tag, date, stage } = req.body;
 
     const task = await Task.findById(id);
 
@@ -322,6 +319,7 @@ export const updateSubTask = async (req, res) => {
       team,
       tag,
       date,
+      stage: stage.toLowerCase() || task.subTasks[subTaskIndex].stage,
     };
 
     task.subTasks[subTaskIndex] = updatedSubTask;
@@ -375,7 +373,6 @@ export const updateTask = async (req, res) => {
 
     await task.save();
 
-    // Обновляем массив задач пользователей
     await User.updateMany(
       { tasks: id },
       { $pull: { tasks: id } }
@@ -423,16 +420,13 @@ export const deleteRestoreTask = async (req, res) => {
     const task = await Task.findById(id);
 
     if (actionType === "delete") {
-      // Удаляем задачу
       await Task.findByIdAndDelete(id);
 
-      // Удаляем задачу из массива задач пользователя
       await User.updateMany(
         { tasks: id },
         { $pull: { tasks: id } }
       );
     } else if (actionType === "deleteAll") {
-      // Удаляем все задачи в корзине и обновляем пользователей
       await Task.deleteMany({ isTrashed: true });
       await User.updateMany(
         { tasks: { $in: (await Task.find({ isTrashed: true })).map(task => task._id) } },
