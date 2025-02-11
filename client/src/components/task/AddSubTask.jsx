@@ -7,7 +7,10 @@ import UserList from "./UserList"; // Import UserList component
 import { useCreateSubTaskMutation } from "../../redux/slices/api/taskApiSlice";
 import { toast } from "sonner";
 import React, { useState } from "react";
+import SelectList from "../SelectList";
 
+
+const LISTS = ["TODO", "IN PROGRESS", "COMPLETED"]; // Task stage options
 
 const AddSubTask = ({ open, setOpen, id }) => {
   const today = new Date().toISOString().split('T')[0];
@@ -24,10 +27,11 @@ const AddSubTask = ({ open, setOpen, id }) => {
 
   const [addSbTask] = useCreateSubTaskMutation();
   const [team, setTeam] = useState([]); // State for team
+  const [stage, setStage] = useState(LISTS[0]); // Default stage
 
   const handleOnSubmit = async (data) => {
     try {
-      const res = await addSbTask({ data: { ...data, team }, id }).unwrap(); // Include team in data
+      const res = await addSbTask({ data: { ...data, team, stage }, id }).unwrap(); // Include team in data
       toast.success(res.message);
       setTimeout(() => {
         setOpen(false);
@@ -63,6 +67,13 @@ const AddSubTask = ({ open, setOpen, id }) => {
             />
 
             <UserList setTeam={setTeam} team={team} /> {/* Add UserList component */}
+
+            <SelectList
+              label='Task Stage'
+              lists={LISTS}
+              selected={stage}
+              setSelected={setStage} // Update stage state
+            />
 
             <div className='flex items-center gap-4'>
               <Textbox

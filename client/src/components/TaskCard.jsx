@@ -99,7 +99,10 @@ const TaskCard = ({ task }) => {
             </div>
             <div className='flex gap-1 items-center text-sm text-gray-600 '>
               <FaList />
-              <span>0/{task?.subTasks?.length}</span>
+              <span>
+                {task?.subTasks?.filter(subTask => subTask.stage === "completed").length}
+                /{task?.subTasks?.length}
+              </span>
             </div>
           </div>
 
@@ -142,27 +145,25 @@ const TaskCard = ({ task }) => {
                   <h5 className="text-base text-black font-semibold">
                   <div className="flex gap-1 items-center text-sm">
                     <BiPin className="flex-shrink-0" />
-                    <span className="overflow-ellipsis overflow-hidden">{subTask.title}</span>
+                    <span className="overflow-ellipsis overflow-hidden whitespace-nowrap">{subTask.title}</span>
+                    <div className="flex items-center gap-1 justify-end ml-auto">
+                      <MdOutlineEdit onClick={() => handleEditSubTask(subTask)} className="cursor-pointer text-blue-500 text-1xl w-4 h-4" />
+                      <RiDeleteBin6Line onClick={() => handleDeleteSubTask(subTask._id)} className="cursor-pointer text-red-500 text-1xl w-4 h-4" />
+                    </div>
                   </div>
                 </h5>
-
-
                   <div className='w-full border-t border-gray-200 my-2' />
                   <div className='flex items-center justify-between mb-2'>
                     <div className='flex items-center gap-3'>
                       <div className='flex gap-1 items-center text-sm text-gray-600'>
                         <span>{formatDate(new Date(subTask?.date))}</span>
                       </div>
-                      <div className='flex gap-1 items-center text-sm text-gray-600'>
-                      <MdOutlineEdit onClick={() => handleEditSubTask(subTask)} className="cursor-pointer text-blue-500"/>
-                      <RiDeleteBin6Line
-                      onClick={() => handleDeleteSubTask(subTask._id)}className="cursor-pointer text-red-500"
-                      />
+                      <span className="bg-blue-600/10 px-3 py-1 rounded-full text-blue-700 font-medium">
+                          {subTask?.stage}
+                      </span>
                         {/* <span className="bg-blue-600/10 px-3 py-1 rounded-full text-blue-700 font-medium">
                           {subTask?.tag}
                         </span> */}
-
-                      </div>
                     </div>
 
                     <div className='flex flex-row-reverse'>

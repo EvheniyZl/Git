@@ -8,6 +8,9 @@ import Button from "../Button";
 import UserList from "./UserList"; // Import UserList component
 import { useUpdateSubTaskMutation } from "../../redux/slices/api/taskApiSlice"; // Хук для обновления подзадачи
 import { toast } from "sonner";
+import SelectList from "../SelectList";
+
+const LISTS = ["TODO", "IN PROGRESS", "COMPLETED"]; // Task stage options
 
 
 const EditSubTask = ({ open, setOpen, id, subTask }) => {
@@ -24,15 +27,18 @@ const EditSubTask = ({ open, setOpen, id, subTask }) => {
       title: subTask ? subTask.title : "",
       date: subTask ? subTask.date : today,
       tag: subTask ? subTask.tag : "",
+      stage: subTask ? subTask.stage : "",
     },
   });
 
   const [team, setTeam] = useState(subTask?.team || []); // Состояние для команды
+  const [stage, setStage] = useState(subTask?.stage?.toUpperCase() || LISTS[0]);
+
 
   const handleOnSubmit = async (data) => {
     try {
       const res = await updateSubTask({
-        data: { ...data, team },
+        data: { ...data, team, stage },
         taskId: id,
         subTaskId: subTask._id, // Отправляем ID подзадачи для обновления
       }).unwrap();
@@ -75,6 +81,13 @@ const EditSubTask = ({ open, setOpen, id, subTask }) => {
             error={errors.title ? errors.title.message : ""}
           />
           <UserList setTeam={setTeam} team={team} />
+
+          <SelectList
+              label='Task Stage'
+              lists={LISTS}
+              selected={stage}
+              setSelected={setStage} // Update stage state
+            />
 
           <div className="flex items-center gap-4">
             <Textbox
