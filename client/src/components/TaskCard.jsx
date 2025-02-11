@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import React, { useState } from "react";
 import {
   MdAttachFile,
   MdKeyboardArrowDown,
@@ -8,7 +7,7 @@ import {
   MdOutlineEdit,
 } from "react-icons/md";
 import { useSelector } from "react-redux";
-import { BGS, PRIOTITYSTYELS, TASK_TYPE, formatDate } from "../utils";
+import { BGS, PRIOTITYSTYELS, TASK_TYPE, formatDate, SUBTASK_TYPE } from "../utils";
 import TaskDialog from "./task/TaskDialog";
 import { BiMessageAltDetail, BiPin } from "react-icons/bi";
 import { FaList } from "react-icons/fa";
@@ -19,6 +18,10 @@ import { RiDeleteBin6Line } from "react-icons/ri";
 import EditSubTask from "./task/EditSubTask";
 import { useDeleteSubTaskMutation } from "../redux/slices/api/taskApiSlice";
 import { toast } from "sonner";
+import { Menu, Transition } from "@headlessui/react";
+import { BsThreeDots } from "react-icons/bs";
+import React, { Fragment, useState } from "react";
+
 
 const ICONS = {
   high: <MdKeyboardDoubleArrowUp />,
@@ -67,7 +70,11 @@ const TaskCard = ({ task }) => {
     <>
       <div className='w-full h-fit bg-white shadow-md p-4 rounded'>
         <div className='w-full flex justify-between'>
-          <div
+          <div className='flex items-center gap-2'>
+            <div className={clsx("w-4 h-4 rounded-full", TASK_TYPE[task.stage])} />
+            <h4 className='line-clamp-1 text-black'>{task?.title}</h4>
+          </div>
+          {/* <div
             className={clsx(
               "flex flex-1 gap-1 items-center text-sm font-medium",
               PRIOTITYSTYELS[task?.priority]
@@ -75,15 +82,12 @@ const TaskCard = ({ task }) => {
           >
             <span className='text-lg'>{ICONS[task?.priority]}</span>
             <span className='uppercase'>{task?.priority} Priority</span>
-          </div>
+          </div> */}
 
           {user?.isAdmin && <TaskDialog task={task} />}
         </div>
 
-        <div className='flex items-center gap-2'>
-          <div className={clsx("w-4 h-4 rounded-full", TASK_TYPE[task.stage])} />
-          <h4 className='line-clamp-1 text-black'>{task?.title}</h4>
-        </div>
+        
         <span className='text-sm text-gray-600'>{formatDate(new Date(task?.date))}</span>
 
         <div className='w-full border-t border-gray-200 my-2' />
@@ -147,8 +151,57 @@ const TaskCard = ({ task }) => {
                     <BiPin className="flex-shrink-0" />
                     <span className="overflow-ellipsis overflow-hidden whitespace-nowrap">{subTask.title}</span>
                     <div className="flex items-center gap-1 justify-end ml-auto">
-                      <MdOutlineEdit onClick={() => handleEditSubTask(subTask)} className="cursor-pointer text-blue-500 text-1xl w-4 h-4" />
-                      <RiDeleteBin6Line onClick={() => handleDeleteSubTask(subTask._id)} className="cursor-pointer text-red-500 text-1xl w-4 h-4" />
+                    <Menu as="div" className="relative inline-block text-left">
+                  <Menu.Button className="inline-flex w-full justify-center rounded-md px-4 py-2 text-sm font-medium text-gray-600">
+                    <BsThreeDots />
+                  </Menu.Button>
+
+                  <Transition
+                    as={Fragment}
+                    enter="transition ease-out duration-100"
+                    enterFrom="transform opacity-0 scale-95"
+                    enterTo="transform opacity-100 scale-100"
+                    leave="transition ease-in duration-75"
+                    leaveFrom="transform opacity-100 scale-100"
+                    leaveTo="transform opacity-0 scale-95"
+                  >
+                    <Menu.Items className="absolute p-4 right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none z-50">
+                      <div className="px-1 py-1 space-y-2">
+                        {/* Edit Button */}
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => handleEditSubTask(subTask)}
+                              className={`${
+                                active ? "bg-blue-500 text-white" : "text-gray-900"
+                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                            >
+                              <MdOutlineEdit className="mr-2 h-5 w-5 text-gray-400" />
+                              Edit
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </div>
+
+                      {/* Delete Button */}
+                      <div className="px-1 py-1">
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              onClick={() => handleDeleteSubTask(subTask._id)}
+                              className={`${
+                                active ? "bg-blue-500 text-white" : "text-red-900"
+                              } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                            >
+                              <RiDeleteBin6Line className="mr-2 h-5 w-5 text-red-400" />
+                              Delete
+                            </button>
+                          )}
+                        </Menu.Item>
+                      </div>
+                    </Menu.Items>
+                  </Transition>
+                </Menu>
                     </div>
                   </div>
                 </h5>
@@ -158,9 +211,16 @@ const TaskCard = ({ task }) => {
                       <div className='flex gap-1 items-center text-sm text-gray-600'>
                         <span>{formatDate(new Date(subTask?.date))}</span>
                       </div>
-                      <span className="bg-blue-600/10 px-3 py-1 rounded-full text-blue-700 font-medium">
-                          {subTask?.stage}
+                      <span
+                        className={clsx(
+                          SUBTASK_TYPE[subTask?.stage]?.background, // Выбираем фон в зависимости от стадии
+                          "px-3 py-1 rounded-full", // Статичные классы
+                          SUBTASK_TYPE[subTask?.stage]?.text // Выбираем цвет текста в зависимости от стадии
+                        )}
+                      >
+                        {subTask?.stage}
                       </span>
+
                         {/* <span className="bg-blue-600/10 px-3 py-1 rounded-full text-blue-700 font-medium">
                           {subTask?.tag}
                         </span> */}

@@ -87,7 +87,7 @@ const AddSubTask = ({ open, setOpen, id }) => {
                 })}
                 error={errors.date ? errors.date.message : ""}
               />
-              <Textbox
+              {/* <Textbox
                 placeholder='Tag'
                 type='text'
                 name='tag'
@@ -97,7 +97,7 @@ const AddSubTask = ({ open, setOpen, id }) => {
                   required: "Tag is required!",
                 })}
                 error={errors.tag ? errors.tag.message : ""}
-              />
+              /> */}
             </div>
           </div>
           <div className='py-3 mt-4 flex sm:flex-row-reverse gap-4'>

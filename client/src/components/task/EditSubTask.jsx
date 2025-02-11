@@ -12,7 +12,6 @@ import SelectList from "../SelectList";
 
 const LISTS = ["TODO", "IN PROGRESS", "COMPLETED"]; // Task stage options
 
-
 const EditSubTask = ({ open, setOpen, id, subTask }) => {
   const today = new Date().toISOString().split("T")[0];
   const [updateSubTask] = useUpdateSubTaskMutation(); // Хук для обновления подзадачи
@@ -101,7 +100,7 @@ const EditSubTask = ({ open, setOpen, id, subTask }) => {
               })}
               error={errors.date ? errors.date.message : ""}
             />
-            <Textbox
+            {/* <Textbox
               placeholder="Tag"
               type="text"
               name="tag"
@@ -111,7 +110,7 @@ const EditSubTask = ({ open, setOpen, id, subTask }) => {
                 required: "Tag is required!",
               })}
               error={errors.tag ? errors.tag.message : ""}
-            />
+            /> */}
           </div>
         </div>
         <div className="py-3 mt-4 flex sm:flex-row-reverse gap-4">

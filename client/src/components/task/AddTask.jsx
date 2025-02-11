@@ -171,7 +171,7 @@ const AddTask = ({ open, setOpen, task }) => {
 
             <UserList setTeam={setTeam} team={team} />
 
-            <div className='flex gap-4'>
+            {/* <div className='flex gap-4'> */}
               <SelectList
                 label='Task Stage'
                 lists={LISTS}
@@ -192,15 +192,15 @@ const AddTask = ({ open, setOpen, task }) => {
                   error={errors.date ? errors.date.message : ""}
                 />
               </div>
-            </div>
+            {/* </div> */}
 
             <div className='flex gap-4'>
-              <SelectList
+              {/* <SelectList
                 label='Priority Level'
                 lists={PRIORIRY}
                 selected={priority}
                 setSelected={setPriority}
-              />
+              /> */}
 
               <div className='w-full flex items-center justify-center mt-4'>
                 <label

@@ -15,10 +15,11 @@ import { RxActivityLog } from "react-icons/rx";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import Tabs from "../components/Tabs";
-import { PRIOTITYSTYELS, TASK_TYPE, getInitials } from "../utils";
+import { PRIOTITYSTYELS, TASK_TYPE, SUBTASK_TYPE, getInitials } from "../utils";
 import Loading from "../components/Loader";
 import Button from "../components/Button";
 import { useGetSingleTaskQuery, usePostTaskActivityMutation } from "../redux/slices/api/taskApiSlice";
+import UserInfo from "../components/UserInfo";
 
 const assets = [
   "https://images.pexels.com/photos/2418664/pexels-photo-2418664.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
@@ -110,7 +111,7 @@ const TaskDetails = () => {
               {/* LEFT */}
               <div className='w-full md:w-1/2 space-y-8'>
                 <div className='flex items-center gap-5'>
-                  <div
+                  {/* <div
                     className={clsx(
                       "flex gap-1 items-center text-base font-semibold px-3 py-1 rounded-full",
                       PRIOTITYSTYELS[task?.priority],
@@ -119,7 +120,7 @@ const TaskDetails = () => {
                   >
                     <span className='text-lg'>{ICONS[task?.priority]}</span>
                     <span className='uppercase'>{task?.priority} Priority</span>
-                  </div>
+                  </div> */}
 
                   <div className={clsx("flex items-center gap-2")}>
                     <div
@@ -150,7 +151,6 @@ const TaskDetails = () => {
                   </div>
                 </div>
 
-                <div className='space-y-4 py-6'>
                   <p className='text-gray-600 font-semibold test-sm'>
                     TASK TEAM
                   </p>
@@ -177,35 +177,41 @@ const TaskDetails = () => {
                       </div>
                     ))}
                   </div>
-                </div>
 
-                <div className='space-y-4 py-6'>
-                  <p className='text-gray-500 font-semibold text-sm'>
-                    SUB-TASKS
-                  </p>
-                  <div className='space-y-8'>
-                    {task?.subTasks?.map((el, index) => (
-                      <div key={index} className='flex gap-3'>
-                        <div className='w-10 h-10 flex items-center justify-center rounded-full bg-violet-50-200'>
-                          <MdTaskAlt className='text-violet-600' size={26} />
+                  <p className="text-gray-500 font-semibold text-sm">SUB-TASKS</p>
+                <div className="space-y-8">
+                  {task?.subTasks?.map((el, index) => (
+                    <div key={index} className="flex gap-3">
+                      <div className="space-y-1">
+                        <div className="flex gap-2 items-center">
+                          <span className="text-sm text-gray-500">
+                            {new Date(el?.date).toDateString()}
+                          </span>
+                          <span
+                            className={clsx(
+                              SUBTASK_TYPE[el?.stage]?.background,
+                              "px-3 py-1 rounded-full",
+                              SUBTASK_TYPE[el?.stage]?.text
+                            )}
+                          >
+                            {el?.stage}
+                          </span>
+                          {/* Displaying Team for Subtask */}
+                        <div className="flex gap-3 mt-2">
+                          {el?.team?.map((member, index) => (
+                            <div
+                              key={index}
+                              className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white text-sm"
+                            >
+                              <UserInfo user={member} />
+                            </div>
+                          ))}
                         </div>
-
-                        <div className='space-y-1'>
-                          <div className='flex gap-2 items-center'>
-                            <span className='text-sm text-gray-500'>
-                              {new Date(el?.date).toDateString()}
-                            </span>
-
-                            <span className='px-2 py-0.5 text-center text-sm rounded-full bg-violet-100 text-violet-700 font-semibold'>
-                              {el?.tag}
-                            </span>
-                          </div>
-
-                          <p className='text-gray-700'>{el?.title}</p>
                         </div>
+                        <p className="text-gray-700">{el?.title}</p>     
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
               {/* RIGHT */}
@@ -288,8 +294,8 @@ const Activities = ({ activity, id, refetch }) => {
   };
 
   return (
-    <div className='w-full flex gap-10 2xl:gap-20 min-h-screen px-10 py-8 bg-white shadow rounded-md justify-between overflow-y-auto'>
-      <div className='w-full md:w-1/2'>
+    <div className='w-full  gap-10 2xl:gap-20 min-h-screen px-10 py-8 bg-white shadow rounded-md justify-between overflow-y-auto'>
+      <div className='w-full md:w-1/1'>
         <h4 className='text-gray-600 font-semibold text-lg mb-5'>Activities</h4>
 
         <div className='w-full'>
@@ -303,7 +309,7 @@ const Activities = ({ activity, id, refetch }) => {
         </div>
       </div>
 
-      <div className='w-full md:w-1/3'>
+      <div className='w-full md:w-1/1'>
         <h4 className='text-gray-600 font-semibold text-lg mb-5'>
           Add Activity
         </h4>

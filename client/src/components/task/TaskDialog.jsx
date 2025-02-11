@@ -17,8 +17,6 @@ const TaskDialog = ({ task }) => {
   const [openEdit, setOpenEdit] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
 
-  const navigate = useNavigate();
-  
   const [deleteTask] = useTrashTaskMutation();
   const [duplicateTask] = useDuplicateTaskMutation();
 
@@ -61,7 +59,9 @@ const TaskDialog = ({ task }) => {
     {
       label: "Open Task",
       icon: <AiTwotoneFolderOpen className='mr-2 h-5 w-5' aria-hidden='true' />,
-      onClick: () => navigate(`/task/${task._id}`),
+      onClick: () => {},  // Оставляем на случай, если будет нужно дополнительно обработать клики
+      // Добавим ссылку на задачу, чтобы можно было использовать её в правом клике
+      link: `/task/${task._id}`,
     },
     {
       label: "Edit",
@@ -102,15 +102,30 @@ const TaskDialog = ({ task }) => {
                 {items.map((el) => (
                   <Menu.Item key={el.label}>
                     {({ active }) => (
-                      <button
-                        onClick={el?.onClick}
-                        className={`${
-                          active ? "bg-blue-500 text-white" : "text-gray-900"
-                        } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                      >
-                        {el.icon}
-                        {el.label}
-                      </button>
+                      // Используем ссылку для открытия задачи в новой вкладке
+                      el.link ? (
+                        <a
+                          href={el.link}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className={`${
+                            active ? "bg-blue-500 text-white" : "text-gray-900"
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          {el.icon}
+                          {el.label}
+                        </a>
+                      ) : (
+                        <button
+                          onClick={el?.onClick}
+                          className={`${
+                            active ? "bg-blue-500 text-white" : "text-gray-900"
+                          } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        >
+                          {el.icon}
+                          {el.label}
+                        </button>
+                      )
                     )}
                   </Menu.Item>
                 ))}
