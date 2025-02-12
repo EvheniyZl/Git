@@ -61,6 +61,16 @@ const TASKTYPEICON = {
       <FaUser size={14} />
     </div>
   ),
+  "subtask added": (
+    <div className='w-6 h-6 flex items-center justify-center rounded-full bg-gray-500 text-white'>
+      <FaUser size={14} />
+    </div>
+  ),
+  "subtask updated": (
+    <div className='w-6 h-6 flex items-center justify-center rounded-full bg-gray-500 text-white'>
+      <FaUser size={14} />
+    </div>
+  ),
   bug: (
     <div className='text-red-600'>
       <FaBug size={24} />

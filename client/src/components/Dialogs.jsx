@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { Dialog } from "@headlessui/react";
 import clsx from "clsx";
 import { FaQuestion } from "react-icons/fa";
@@ -17,6 +18,15 @@ export default function ConfirmatioDialog({
     setType("delete");
     setMsg(null);
     setOpen(false);
+  };
+
+  const handleDelete = async () => {
+    try {
+      await onClick(); // Call the passed delete function
+      // Assuming onClick handles deletion; add additional success handling here if necessary.
+    } catch (error) {
+      toast.error(`Error: ${error.message || 'Something went wrong'}`); // Show toast with the error
+    }
   };
 
   return (
@@ -41,18 +51,17 @@ export default function ConfirmatioDialog({
           </p>
 
           <div className='bg-gray-50 py-3 sm:flex sm:flex-row-reverse gap-4'>
-          <Button
-            type='button'
-            className={clsx(
-              " px-8 text-sm font-semibold text-white sm:w-auto",
-              type === "restore" || type === "restoreAll"
-                ? "bg-yellow-600"
-                : "bg-red-600 hover:bg-red-500"
-            )}
-            onClick={onClick}
-            label={type === "restore" || type === "restoreAll" ? "Restore All" : "Delete"}
-          />
-
+            <Button
+              type='button'
+              className={clsx(
+                " px-8 text-sm font-semibold text-white sm:w-auto",
+                type === "restore" || type === "restoreAll"
+                  ? "bg-yellow-600"
+                  : "bg-red-600 hover:bg-red-500"
+              )}
+              onClick={handleDelete} // Call handleDelete instead of directly onClick
+              label={type === "restore" || type === "restoreAll" ? "Restore All" : "Delete"}
+            />
 
             <Button
               type='button'
@@ -70,6 +79,15 @@ export default function ConfirmatioDialog({
 export function UserAction({ open, setOpen, onClick = () => {} }) {
   const closeDialog = () => {
     setOpen(false);
+  };
+
+  const handleAction = async () => {
+    try {
+      await onClick(); // Execute the action (e.g., activating/deactivating account)
+      // Add any additional success handling here if necessary.
+    } catch (error) {
+      toast.error(`Error: ${error.message || 'Something went wrong'}`); // Show toast with the error
+    }
   };
 
   return (
@@ -93,7 +111,7 @@ export function UserAction({ open, setOpen, onClick = () => {} }) {
                 " px-8 text-sm font-semibold text-white sm:w-auto",
                 "bg-red-600 hover:bg-red-500"
               )}
-              onClick={onClick}
+              onClick={handleAction} // Call handleAction instead of directly onClick
               label={"Yes"}
             />
 

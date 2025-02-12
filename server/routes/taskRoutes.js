@@ -12,8 +12,6 @@ import {
   postTaskActivity,
   trashTask,
   updateTask,
-  updateActivity,
-  deleteActivity,
 } from "../controllers/taskController.js";
 import { isAdminRoute, protectRoute } from "../middlewares/authMiddlewave.js";
 
@@ -32,8 +30,6 @@ router.put("/update-subtask/:id/:subTaskId", protectRoute, isAdminRoute, updateS
 router.delete("/delete-subtask/:id/:subTaskId", protectRoute, isAdminRoute, deleteSubTask);
 router.put("/update/:id", protectRoute, isAdminRoute, updateTask);
 router.put("/:id", protectRoute, isAdminRoute, trashTask);
-router.put("/update-activity/:taskId/:activityId", protectRoute, isAdminRoute, updateActivity);
-router.delete("/delete-activity/:taskId/:activityId", protectRoute, isAdminRoute, deleteActivity);
 
 router.delete(
   "/delete-restore/:id?",
