@@ -12,7 +12,8 @@ import {
   postTaskActivity,
   trashTask,
   updateTask,
-  updateActivity, deleteActivity,
+  updateActivity,
+  deleteActivity,
 } from "../controllers/taskController.js";
 import { isAdminRoute, protectRoute } from "../middlewares/authMiddlewave.js";
 
