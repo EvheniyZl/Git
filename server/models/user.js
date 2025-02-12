@@ -10,7 +10,7 @@ const userSchema = new Schema(
     password: { type: String, required: true },
     isAdmin: { type: Boolean, required: true, default: false },
     tasks: [{ type: Schema.Types.ObjectId, ref: "Task" }],
-    subTasks: [{ type: Schema.Types.ObjectId, ref: 'Task.subTasks' }],
+    subTasks: [{ type: Schema.Types.ObjectId, ref: 'SubTask' }],
     isActive: { type: Boolean, required: true, default: true },
   },
   { timestamps: true }

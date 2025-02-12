@@ -271,7 +271,7 @@ export const getTask = async (req, res) => {
 
 export const createSubTask = async (req, res) => {
   try {
-    const { title, tag, date, team } = req.body; // добавляем команду подзадачи
+    const { title, tag, date, team } = req.body;
     const { id } = req.params;
     const { userId } = req.user;
 
@@ -279,14 +279,12 @@ export const createSubTask = async (req, res) => {
       title,
       date,
       tag,
-      team, // сохраняем команду для подзадачи
+      team,
     };
 
     const task = await Task.findById(id);
-
     task.subTasks.push(newSubTask);
 
-    // Формирование текста для активности и уведомления
     let text = `A new subtask has been added to the task: "${task.title}"`;
     if (newSubTask.team?.length > 1) {
       text = text + `, and ${newSubTask.team?.length - 1} others`;
@@ -294,30 +292,26 @@ export const createSubTask = async (req, res) => {
 
     text = text + `. The subtask date is ${new Date(date).toDateString()}.`;
 
-    // Добавляем активность для задачи
     const activity = {
       type: "subtask added",
       activity: text,
       by: userId,
     };
 
-    // Добавляем активность в задачу
     task.activities.push(activity);
-
-    // Сохраняем изменения в задаче
     await task.save();
 
-    // Отправляем уведомление для участников команды подзадачи
+    // Добавляем подзадачу в поле subTasks у пользователей
+    await User.updateMany(
+      { _id: { $in: newSubTask.team } },
+      { $push: { subTasks: task._id } }
+    );
+
     await Notice.create({
-      team: newSubTask.team, // отправляем уведомление для команды подзадачи
+      team: newSubTask.team,
       text,
       task: task._id,
     });
-
-    await User.updateMany(
-      { _id: { $in: team } },
-      { $push: { subTasks: newSubTask } }
-    );
 
     res.status(200).json({ status: true, message: "SubTask added successfully." });
   } catch (error) {
@@ -338,6 +332,7 @@ export const updateSubTask = async (req, res) => {
       return res.status(404).json({ status: false, message: "Subtask not found." });
     }
 
+    const oldTeam = task.subTasks[subTaskIndex].team;
     const updatedSubTask = {
       ...task.subTasks[subTaskIndex],
       title,
@@ -349,27 +344,33 @@ export const updateSubTask = async (req, res) => {
 
     task.subTasks[subTaskIndex] = updatedSubTask;
 
-    // Текст активности
     let activityText = `The subtask "${updatedSubTask.title}" in task "${task.title}" has been updated.`;
     if (updatedSubTask.team?.length > 1) {
       activityText += ` The new team includes ${updatedSubTask.team.length} members.`;
     }
     activityText += ` The subtask date is now ${new Date(updatedSubTask.date).toDateString()}.`;
 
-    // Создание активности
     const activity = {
       type: "subtask updated",
       activity: activityText,
       by: req.user.userId,
     };
 
-    // Добавление активности в задачу
     task.activities.push(activity);
-
-    // Сохраняем обновленную задачу
     await task.save();
 
-    // Отправка уведомления для участников команды подзадачи
+    // Обновляем поле subTasks у пользователей
+    if (team && team.length !== oldTeam.length) {
+      await User.updateMany(
+        { _id: { $in: oldTeam } },
+        { $pull: { subTasks: task._id } }
+      );
+      await User.updateMany(
+        { _id: { $in: team } },
+        { $push: { subTasks: task._id } }
+      );
+    }
+
     await Notice.create({
       team: updatedSubTask.team,
       text: activityText,
@@ -388,21 +389,22 @@ export const deleteSubTask = async (req, res) => {
     const { id, subTaskId } = req.params;
 
     const task = await Task.findById(id);
-
     const subTaskIndex = task.subTasks.findIndex(subTask => subTask._id.toString() === subTaskId);
-    
+
     if (subTaskIndex === -1) {
       return res.status(404).json({ status: false, message: "Subtask not found." });
     }
 
+    const subTaskTeam = task.subTasks[subTaskIndex].team;
+
     task.subTasks.splice(subTaskIndex, 1);
-
-    await User.updateMany(
-      { subTasks: subTaskId },
-      { $pull: { subTasks: subTaskId } }
-    );
-
     await task.save();
+
+    // Удаляем подзадачу из поля subTasks у пользователей
+    await User.updateMany(
+      { _id: { $in: subTaskTeam } },
+      { $pull: { subTasks: task._id } }
+    );
 
     res.status(200).json({ status: true, message: "SubTask deleted successfully." });
   } catch (error) {
