@@ -18,7 +18,7 @@ import Tabs from "../components/Tabs";
 import { PRIOTITYSTYELS, TASK_TYPE, SUBTASK_TYPE, getInitials } from "../utils";
 import Loading from "../components/Loader";
 import Button from "../components/Button";
-import { useGetSingleTaskQuery, usePostTaskActivityMutation } from "../redux/slices/api/taskApiSlice";
+import { useGetSingleTaskQuery, usePostTaskActivityMutation, useUpdateActivityMutation, useDeleteActivityMutation } from "../redux/slices/api/taskApiSlice";
 import UserInfo from "../components/UserInfo";
 
 const assets = [
@@ -254,20 +254,25 @@ const TaskDetails = () => {
 const Activities = ({ activity, id, refetch }) => {
   const [selected, setSelected] = useState(act_types[0]);
   const [text, setText] = useState("");
+  const [editActivityId, setEditActivityId] = useState(null);
+  const [editText, setEditText] = useState("");
 
-  const [postActivity, {isLoading}] = usePostTaskActivityMutation();
+  const [postActivity, { isLoading: isPosting }] = usePostTaskActivityMutation();
+  const [updateActivity, { isLoading: isUpdating }] = useUpdateActivityMutation();
+  const [deleteActivity, { isLoading: isDeleting }] = useDeleteActivityMutation();
+
   const handleSubmit = async () => {
     try {
-      const activity = {
+      const activityData = {
         type: selected?.toLowerCase(),
         activity: text,
       };
-  
-      const result = await postActivity({
-        data: activity, // <-- Changed from activityData to activity
-        id
+
+      await postActivity({
+        data: activityData,
+        id,
       }).unwrap();
-  
+
       setText("");
       toast.success("Activity added successfully");
       refetch();
@@ -276,7 +281,39 @@ const Activities = ({ activity, id, refetch }) => {
       toast.error("Failed to add activity");
     }
   };
-  
+
+  const handleEdit = async (activityId) => {
+    try {
+      await updateActivity({
+        taskId: id,
+        activityId,
+        data: { activity: editText },
+      }).unwrap();
+
+      setEditActivityId(null);
+      setEditText("");
+      toast.success("Activity updated successfully");
+      refetch();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update activity");
+    }
+  };
+
+  const handleDelete = async (activityId) => {
+    try {
+      await deleteActivity({
+        taskId: id,
+        activityId,
+      }).unwrap();
+
+      toast.success("Activity deleted successfully");
+      refetch();
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete activity");
+    }
+  };
 
   const Card = ({ item }) => {
     return (
@@ -293,18 +330,50 @@ const Activities = ({ activity, id, refetch }) => {
         <div className='flex flex-col gap-y-1 mb-8'>
           <p className='font-semibold'>{item?.by?.name}</p>
           <div className='text-gray-500 space-y-2'>
-            {/* assigned 6 minutes ago */}
             <span className='capitalize'>{item?.type} </span>
             <span className='text-sm'>{moment(item?.date).fromNow()} (UTC+2)</span>
           </div>
-          <div className='text-gray-700'>{item?.activity}</div>
+          {editActivityId === item._id ? (
+            <div className='flex gap-2'>
+              <textarea
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                className='bg-white w-full mt-2 border border-gray-300 outline-none p-2 rounded-md focus:ring-2 ring-blue-500'
+              />
+              <Button
+                type='button'
+                label='Save'
+                onClick={() => handleEdit(item._id)}
+                className='bg-blue-600 text-white rounded'
+              />
+            </div>
+          ) : (
+            <div className='text-gray-700'>{item?.activity}</div>
+          )}
+          <div className='flex gap-2'>
+            <Button
+              type='button'
+              label='Edit'
+              onClick={() => {
+                setEditActivityId(item._id);
+                setEditText(item.activity);
+              }}
+              className='bg-yellow-500 text-white rounded'
+            />
+            <Button
+              type='button'
+              label='Delete'
+              onClick={() => handleDelete(item._id)}
+              className='bg-red-600 text-white rounded'
+            />
+          </div>
         </div>
       </div>
     );
   };
 
   return (
-    <div className='w-full  gap-10 2xl:gap-20 min-h-screen px-10 py-8 bg-white shadow rounded-md justify-between overflow-y-auto'>
+    <div className='w-full gap-10 2xl:gap-20 min-h-screen px-10 py-8 bg-white shadow rounded-md justify-between overflow-y-auto'>
       <div className='w-full md:w-1/1'>
         <h4 className='text-gray-600 font-semibold text-lg mb-5'>Activities</h4>
 
@@ -342,7 +411,7 @@ const Activities = ({ activity, id, refetch }) => {
             placeholder='Type ......'
             className='bg-white w-full mt-10 border border-gray-300 outline-none p-4 rounded-md focus:ring-2 ring-blue-500'
           ></textarea>
-          {isLoading ? (
+          {isPosting ? (
             <Loading />
           ) : (
             <Button
@@ -357,4 +426,5 @@ const Activities = ({ activity, id, refetch }) => {
     </div>
   );
 };
+
 export default TaskDetails;
