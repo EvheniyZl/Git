@@ -523,52 +523,52 @@ export const deleteRestoreTask = async (req, res) => {
   }
 };
 
-// Контроллер для обновления активности
 export const updateActivity = async (req, res) => {
   try {
     const { taskId, activityId } = req.params;
-    const { activity, type } = req.body;
+    const { activity } = req.body;
 
     const task = await Task.findById(taskId);
-
-    // Находим активность по ID
-    const activityToUpdate = task.activities.id(activityId);
-    if (!activityToUpdate) {
-      return res.status(404).json({ message: "Activity not found." });
+    if (!task) {
+      return res.status(404).json({ status: false, message: "Task not found" });
     }
 
-    // Обновляем поля активности
-    activityToUpdate.activity = activity || activityToUpdate.activity;
-    activityToUpdate.type = type || activityToUpdate.type;
+    const activityIndex = task.activities.findIndex(
+      (act) => act._id.toString() === activityId
+    );
 
+    if (activityIndex === -1) {
+      return res.status(404).json({ status: false, message: "Activity not found" });
+    }
+
+    task.activities[activityIndex].activity = activity;
     await task.save();
-    res.status(200).json({ message: "Activity updated successfully." });
+
+    res.status(200).json({ status: true, message: "Activity updated successfully", task });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Failed to update activity." });
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
   }
 };
 
-// Контроллер для удаления активности
 export const deleteActivity = async (req, res) => {
   try {
     const { taskId, activityId } = req.params;
 
     const task = await Task.findById(taskId);
-
-    // Находим активность по ID
-    const activityToDelete = task.activities.id(activityId);
-    if (!activityToDelete) {
-      return res.status(404).json({ message: "Activity not found." });
+    if (!task) {
+      return res.status(404).json({ status: false, message: "Task not found" });
     }
 
-    // Удаляем активность
-    activityToDelete.remove();
+    task.activities = task.activities.filter(
+      (act) => act._id.toString() !== activityId
+    );
+
     await task.save();
 
-    res.status(200).json({ message: "Activity deleted successfully." });
+    res.status(200).json({ status: true, message: "Activity deleted successfully", task });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: "Failed to delete activity." });
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
   }
 };
