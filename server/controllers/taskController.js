@@ -10,12 +10,12 @@ export const createTask = async (req, res) => {
 
     let text = "New task has been assigned to you";
     if (team?.length > 1) {
-      text = text + ` and ${team?.length - 1} others.`;
+      text = text + ` and ${team?.length - 1} others`;
     }
 
     text =
       text +
-      ` The task priority is set a ${priority} priority, so check and act accordingly. The task date is ${new Date(
+      `. The task date is ${new Date(
         date
       ).toDateString()}. Thank you!!!`;
 
@@ -82,14 +82,12 @@ export const duplicateTask = async (req, res) => {
 
     let text = "New task has been assigned to you";
     if (task.team.length > 1) {
-      text = text + ` and ${task.team.length - 1} others.`;
+      text = text + ` and ${task.team.length - 1} others`;
     }
 
     text =
       text +
-      ` The task priority is set a ${
-        task.priority
-      } priority, so check and act accordingly. The task date is ${task.date.toDateString()}. Thank you!!!`;
+      `. The task date is ${task.date.toDateString()}. Thank you!!!`;
 
     await Notice.create({
       team: task.team,
@@ -273,22 +271,47 @@ export const getTask = async (req, res) => {
 
 export const createSubTask = async (req, res) => {
   try {
-    const { title, team, tag, date, stage } = req.body;
+    const { title, tag, date } = req.body;
     const { id } = req.params;
+    const { userId } = req.user;
 
     const newSubTask = {
       title,
-      team,
       date,
       tag,
-      stage: stage.toLowerCase() || "todo",
     };
 
     const task = await Task.findById(id);
 
     task.subTasks.push(newSubTask);
 
+    // Формирование текста для активности и уведомления
+    let text = `A new subtask has been added to the task: "${task.title}"`;
+    if (task.team?.length > 1) {
+      text = text + `, and ${task.team?.length - 1} others`;
+    }
+
+    text = text + `. The subtask date is ${new Date(date).toDateString()}.`;
+
+    // Добавляем активность для задачи
+    const activity = {
+      type: "subtask_added",
+      activity: text,
+      by: userId,
+    };
+
+    // Добавляем активность в задачу
+    task.activities.push(activity);
+
+    // Сохраняем изменения в задаче
     await task.save();
+
+    // Отправляем уведомление для всех участников
+    await Notice.create({
+      team: task.team,
+      text,
+      task: task._id,
+    });
 
     res.status(200).json({ status: true, message: "SubTask added successfully." });
   } catch (error) {
