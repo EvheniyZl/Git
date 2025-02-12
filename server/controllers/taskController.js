@@ -296,7 +296,7 @@ export const createSubTask = async (req, res) => {
 
     // Добавляем активность для задачи
     const activity = {
-      type: "subtask_added",
+      type: "subtask added",
       activity: text,
       by: userId,
     };
@@ -353,7 +353,7 @@ export const updateSubTask = async (req, res) => {
 
     // Создание активности
     const activity = {
-      type: "subtask_updated",
+      type: "subtask updated",
       activity: activityText,
       by: req.user.userId,
     };
