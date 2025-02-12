@@ -314,6 +314,11 @@ export const createSubTask = async (req, res) => {
       task: task._id,
     });
 
+    await User.updateMany(
+      { _id: { $in: team } },
+      { $push: { subTasks: newSubTask } }
+    );
+
     res.status(200).json({ status: true, message: "SubTask added successfully." });
   } catch (error) {
     console.log(error);
@@ -391,6 +396,11 @@ export const deleteSubTask = async (req, res) => {
     }
 
     task.subTasks.splice(subTaskIndex, 1);
+
+    await User.updateMany(
+      { subTasks: subTaskId },
+      { $pull: { subTasks: subTaskId } }
+    );
 
     await task.save();
 
