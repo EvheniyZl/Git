@@ -522,3 +522,53 @@ export const deleteRestoreTask = async (req, res) => {
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+
+// Контроллер для обновления активности
+export const updateActivity = async (req, res) => {
+  try {
+    const { taskId, activityId } = req.params;
+    const { activity, type } = req.body;
+
+    const task = await Task.findById(taskId);
+
+    // Находим активность по ID
+    const activityToUpdate = task.activities.id(activityId);
+    if (!activityToUpdate) {
+      return res.status(404).json({ message: "Activity not found." });
+    }
+
+    // Обновляем поля активности
+    activityToUpdate.activity = activity || activityToUpdate.activity;
+    activityToUpdate.type = type || activityToUpdate.type;
+
+    await task.save();
+    res.status(200).json({ message: "Activity updated successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to update activity." });
+  }
+};
+
+// Контроллер для удаления активности
+export const deleteActivity = async (req, res) => {
+  try {
+    const { taskId, activityId } = req.params;
+
+    const task = await Task.findById(taskId);
+
+    // Находим активность по ID
+    const activityToDelete = task.activities.id(activityId);
+    if (!activityToDelete) {
+      return res.status(404).json({ message: "Activity not found." });
+    }
+
+    // Удаляем активность
+    activityToDelete.remove();
+    await task.save();
+
+    res.status(200).json({ message: "Activity deleted successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Failed to delete activity." });
+  }
+};
