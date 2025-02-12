@@ -30,6 +30,7 @@ const taskSchema = new Schema(
             "bug",
             "completed",
             "commented",
+            "subtask_added",
           ],
         },
         activity: String,
