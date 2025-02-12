@@ -522,3 +522,56 @@ export const deleteRestoreTask = async (req, res) => {
     return res.status(400).json({ status: false, message: error.message });
   }
 };
+
+// PUT endpoint for editing an activity
+export const updateActivity = async (req, res) => {
+  try {
+    const { taskId, activityId } = req.params;
+    const { type, activity } = req.body;
+
+    // Find the task and activity by IDs
+    const task = await Task.findById(taskId);
+    const existingActivity = task.activities.id(activityId);
+
+    if (!existingActivity) {
+      return res.status(404).json({ message: 'Activity not found' });
+    }
+
+    // Update activity
+    existingActivity.type = type;
+    existingActivity.activity = activity;
+    existingActivity.date = new Date();
+
+    await task.save();
+
+    res.status(200).json({ message: 'Activity updated successfully', task });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ message: error.message });
+  }
+};
+
+// DELETE endpoint for deleting an activity
+export const deleteActivity = async (req, res) => {
+  try {
+    const { taskId, activityId } = req.params;
+
+    // Find the task and activity by IDs
+    const task = await Task.findById(taskId);
+    const existingActivity = task.activities.id(activityId);
+
+    if (!existingActivity) {
+      return res.status(404).json({ message: 'Activity not found' });
+    }
+
+    // Remove the activity
+    existingActivity.remove();
+
+    await task.save();
+
+    res.status(200).json({ message: 'Activity deleted successfully', task });
+  } catch (error) {
+    console.log(error);
+    return res.status(400).json({ message: error.message });
+  }
+};
