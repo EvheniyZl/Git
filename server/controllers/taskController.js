@@ -271,7 +271,7 @@ export const getTask = async (req, res) => {
 
 export const createSubTask = async (req, res) => {
   try {
-    const { title, tag, date } = req.body;
+    const { title, tag, date, team } = req.body; // добавляем команду подзадачи
     const { id } = req.params;
     const { userId } = req.user;
 
@@ -279,6 +279,7 @@ export const createSubTask = async (req, res) => {
       title,
       date,
       tag,
+      team, // сохраняем команду для подзадачи
     };
 
     const task = await Task.findById(id);
@@ -287,8 +288,8 @@ export const createSubTask = async (req, res) => {
 
     // Формирование текста для активности и уведомления
     let text = `A new subtask has been added to the task: "${task.title}"`;
-    if (task.team?.length > 1) {
-      text = text + `, and ${task.team?.length - 1} others`;
+    if (newSubTask.team?.length > 1) {
+      text = text + `, and ${newSubTask.team?.length - 1} others`;
     }
 
     text = text + `. The subtask date is ${new Date(date).toDateString()}.`;
@@ -306,9 +307,9 @@ export const createSubTask = async (req, res) => {
     // Сохраняем изменения в задаче
     await task.save();
 
-    // Отправляем уведомление для всех участников
+    // Отправляем уведомление для участников команды подзадачи
     await Notice.create({
-      team: task.team,
+      team: newSubTask.team, // отправляем уведомление для команды подзадачи
       text,
       task: task._id,
     });
@@ -326,9 +327,8 @@ export const updateSubTask = async (req, res) => {
     const { title, team, tag, date, stage } = req.body;
 
     const task = await Task.findById(id);
-
     const subTaskIndex = task.subTasks.findIndex(subTask => subTask._id.toString() === subTaskId);
-    
+
     if (subTaskIndex === -1) {
       return res.status(404).json({ status: false, message: "Subtask not found." });
     }
@@ -344,7 +344,32 @@ export const updateSubTask = async (req, res) => {
 
     task.subTasks[subTaskIndex] = updatedSubTask;
 
+    // Текст активности
+    let activityText = `The subtask "${updatedSubTask.title}" in task "${task.title}" has been updated.`;
+    if (updatedSubTask.team?.length > 1) {
+      activityText += ` The new team includes ${updatedSubTask.team.length} members.`;
+    }
+    activityText += ` The subtask date is now ${new Date(updatedSubTask.date).toDateString()}.`;
+
+    // Создание активности
+    const activity = {
+      type: "subtask_updated",
+      activity: activityText,
+      by: req.user.userId,
+    };
+
+    // Добавление активности в задачу
+    task.activities.push(activity);
+
+    // Сохраняем обновленную задачу
     await task.save();
+
+    // Отправка уведомления для участников команды подзадачи
+    await Notice.create({
+      team: updatedSubTask.team,
+      text: activityText,
+      task: task._id,
+    });
 
     res.status(200).json({ status: true, message: "SubTask updated successfully." });
   } catch (error) {
@@ -382,8 +407,8 @@ export const updateTask = async (req, res) => {
     const { title, date, team, stage, priority, assets } = req.body;
 
     const task = await Task.findById(id);
-
     const oldTeam = task.team;
+
     task.title = title;
     task.date = date;
     task.priority = priority.toLowerCase();
@@ -391,26 +416,51 @@ export const updateTask = async (req, res) => {
     task.stage = stage.toLowerCase();
     task.team = team;
 
+    // Текст активности
+    let activityText = `The task "${task.title}" has been updated.`;
+    if (team?.length > 1) {
+      activityText += ` The new team includes ${team.length} members.`;
+    }
+    activityText += ` The task date is now ${new Date(date).toDateString()}.`;
+
+    // Создание активности
+    const activity = {
+      type: "updated",
+      activity: activityText,
+      by: req.user.userId,
+    };
+
+    // Добавление активности в задачу
+    task.activities.push(activity);
+
+    // Отправка уведомлений старой и новой команде
+    if (team.length !== oldTeam.length) {
+      await User.updateMany(
+        { tasks: id },
+        { $pull: { tasks: id } } // Удаление задачи из старой команды
+      );
+      await User.updateMany(
+        { _id: { $in: team } },
+        { $push: { tasks: id } } // Добавление задачи в новую команду
+      );
+    }
+
+    // Сохраняем обновленную задачу
     await task.save();
 
-    await User.updateMany(
-      { tasks: id },
-      { $pull: { tasks: id } }
-    );
-    await User.updateMany(
-      { _id: { $in: team } },
-      { $push: { tasks: id } }
-    );
+    // Отправка уведомлений для участников новой команды
+    await Notice.create({
+      team: team,
+      text: activityText,
+      task: task._id,
+    });
 
-    res
-      .status(200)
-      .json({ status: true, message: "Task updated successfully." });
+    res.status(200).json({ status: true, message: "Task updated successfully." });
   } catch (error) {
     console.log(error);
     return res.status(400).json({ status: false, message: error.message });
   }
 };
-
 
 export const trashTask = async (req, res) => {
   try {
