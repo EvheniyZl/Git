@@ -215,6 +215,7 @@ export const getTasks = async (req, res) => {
 
       if (userId) {
           query.team = { $in: [userId] }; // Фильтруем задачи, где пользователь находится в команде
+          query.subTasks = { team: { $in: [userId] } };  // Также фильтруем подзадачи по пользователю
       }
 
       let queryResult = Task.find(query)
