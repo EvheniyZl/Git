@@ -7,7 +7,7 @@ import {
   MdKeyboardDoubleArrowUp,
 } from "react-icons/md";
 import { toast } from "sonner";
-import { BGS, PRIOTITYSTYELS, TASK_TYPE, formatDate } from "../../utils";
+import { BGS, PRIOTITYSTYELS, TASK_TYPE, formatDate, SUBTASK_TYPE } from "../../utils";
 import clsx from "clsx";
 import { FaList } from "react-icons/fa";
 import UserInfo from "../UserInfo";
@@ -22,11 +22,11 @@ const ICONS = {
   low: <MdKeyboardArrowDown />,
 };
 
-const Table = ({ tasks }) => {
+const Table = ({ tasks, selectedUserId }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selected, setSelected] = useState(null);
   const [openEdit, setOpenEdit] = useState(false);
-  
+
   const [trashTask] = useTrashTaskMutation();
 
   const deleteClicks = (id) => {
@@ -34,12 +34,12 @@ const Table = ({ tasks }) => {
     setOpenDialog(true);
   };
 
-  const editTaskHandler = (el)=> {
-    setSelected(el); 
-    setOpenEdit(true); 
+  const editTaskHandler = (el) => {
+    setSelected(el);
+    setOpenEdit(true);
   }
 
-  const deleteHandler = async() => {
+  const deleteHandler = async () => {
     try {
       const result = await trashTask({
         id: selected,
@@ -47,7 +47,7 @@ const Table = ({ tasks }) => {
       }).unwrap();
       toast.success(result?.message);
       setTimeout(() => {
-        setOpenDialog(false);  
+        setOpenDialog(false);
       }, 500);
     } catch (error) {
       console.log(error);
@@ -57,125 +57,185 @@ const Table = ({ tasks }) => {
 
   const TableHeader = () => (
     <thead className='w-full border-b border-gray-300'>
-      <tr className='w-full text-black  text-left'>
-        <th className='py-2'>Task Title</th>
-        <th className='py-2'>Priority</th>
-        <th className='py-2 line-clamp-1'>Created At</th>
-        <th className='py-2'>Assets</th>
-        <th className='py-2'>Team</th>
+      <tr className='w-full text-black text-left'>
+        <th className='py-2'>Date of Created</th>
+        <th className='py-2'>Applicant</th>
+        <th className='py-2'>Order Name</th>
+        <th className='py-2'>Duration</th>
+        <th className='py-2'>Project Name</th>
+        <th className='py-2'>Status</th>
+        <th className='py-2'>Export</th>
       </tr>
     </thead>
   );
 
-  const TableRow = ({ task }) => (
-    <tr className='border-b border-gray-200 text-gray-600 hover:bg-gray-300/10'>
-      <td className='py-2'>
-        <div className='flex items-center gap-2'>
-          <div
-            className={clsx("w-4 h-4 rounded-full", TASK_TYPE[task.stage])}
-          />
-          <p className='w-full line-clamp-2 text-base text-black'>
-            {task?.title}
-          </p>
-        </div>
-      </td>
+  const TableRow = ({ task, selectedUserId }) => {
+    const getAllApplicants = (team) => {
+      return team.map(user => user.name).join(", ");
+    };
 
-      <td className='py-2'>
-        <div className={"flex gap-1 items-center"}>
-          <span className={clsx("text-lg", PRIOTITYSTYELS[task?.priority])}>
-            {ICONS[task?.priority]}
-          </span>
-          <span className='capitalize line-clamp-1'>
-            {task?.priority} Priority
-          </span>
-        </div>
-      </td>
+    const getSubTaskData = (subTask) => {
+      return {
+        date: subTask?.date || task?.date,
+        applicant: selectedUserId
+          ? subTask?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name
+          : getAllApplicants(subTask?.team || task?.team),
+        orderName: subTask?.title || "-",
+        status: subTask?.stage || task?.stage,
+      };
+    };
 
-      <td className='py-2'>
-        <span className='text-sm text-gray-600'>
-          {formatDate(new Date(task?.date))}
-        </span>
-      </td>
+    const subTaskData = task?.subTasks?.[0]
+      ? getSubTaskData(task?.subTasks[0])
+      : {
+          date: task?.date,
+          applicant: selectedUserId
+            ? task?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name || "No team"
+            : getAllApplicants(task?.team),
+          orderName: "-",
+          status: task?.stage || "No stage",
+        };
 
-      <td className='py-2'>
-        <div className='flex items-center gap-3'>
-          <div className='flex gap-1 items-center text-sm text-gray-600'>
-            <BiMessageAltDetail />
-            <span>{task?.activities?.length}</span>
-          </div>
-          <div className='flex gap-1 items-center text-sm text-gray-600 dark:text-gray-400'>
-            <MdAttachFile />
-            <span>{task?.assets?.length}</span>
-          </div>
-          <div className='flex gap-1 items-center text-sm text-gray-600 dark:text-gray-400'>
-            <FaList />
-            <span>0/{task?.subTasks?.length}</span>
-          </div>
-        </div>
-      </td>
+    return (
+      <>
+        <tr className='border-b border-gray-200 text-gray-600 hover:bg-gray-300/10'>
+          {/* Date of Created */}
+          <td className='py-2'>
+            <span className='text-sm text-gray-600'>
+              {formatDate(new Date(task?.date))}
+            </span>
+          </td>
 
-      <td className='py-2'>
-        <div className='flex'>
-          {task?.team?.map((m, index) => (
-            <div
-              key={m._id}
+          {/* Applicant */}
+          <td className='py-2'>
+            <span className='text-sm text-gray-600'>
+              {selectedUserId
+                ? task?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name || "No team"
+                : getAllApplicants(task?.team)}
+            </span>
+          </td>
+
+          {/* Order Name */}
+          <td className='py-2'>
+            <span className='text-sm text-gray-600'>-</span>
+          </td>
+
+          {/* Duration */}
+          <td className='py-2'>
+            <span className='text-sm text-gray-600'>
+              24h
+            </span>
+          </td>
+
+          {/* Project Name */}
+          <td className='py-2'>
+            <span className='text-sm text-gray-600'>
+              {task?.title}
+            </span>
+          </td>
+
+          {/* Status */}
+          <td className='py-2'>
+            <span
               className={clsx(
-                "w-7 h-7 rounded-full text-white flex items-center justify-center text-sm -mr-1",
-                BGS[index % BGS?.length]
+                SUBTASK_TYPE[subTaskData.status]?.background,
+                "px-3 py-1 rounded-full",
+                SUBTASK_TYPE[subTaskData.status]?.text
               )}
             >
-              <UserInfo user={m} />
-            </div>
-          ))}
-        </div>
-      </td>
+              {subTaskData.status}
+            </span>   
+          </td>
 
-      <td className='py-2 flex gap-2 md:gap-4 justify-end'>
-        <Button
-          className='text-blue-600 hover:text-blue-500 sm:px-0 text-sm md:text-base'
-          label='Edit'
-          type='button'
-          onClick={() => editTaskHandler(task)}
-        />
+          {/* Export */}
+          <td className='py-2'>
+            <button className="flex items-center text-sm text-gray-600 hover:text-blue-500">
+              <MdAttachFile className="mr-1" />
+              Download
+            </button>
+          </td>
+        </tr>
 
-        <Button
-          className='text-red-700 hover:text-red-500 sm:px-0 text-sm md:text-base'
-          label='Delete'
-          type='button'
-          onClick={() => deleteClicks(task._id)}
-        />
-      </td>
-    </tr>
-  );
+        {/* Подзадачи */}
+        {task?.subTasks?.map((subTask) => {
+          const subTaskData = getSubTaskData(subTask);
+          return (
+            <tr key={subTask._id} className='border-b border-gray-200 text-gray-600 hover:bg-gray-300/10'>
+              {/* Date of Created */}
+              <td className='py-2'>
+                <span className='text-sm text-gray-600'>
+                  {formatDate(new Date(subTaskData.date))}
+                </span>
+              </td>
+
+              {/* Applicant */}
+              <td className='py-2'>
+                <span className='text-sm text-gray-600'>
+                  {subTaskData.applicant || "No team"}
+                </span>
+              </td>
+
+              {/* Order Name */}
+              <td className='py-2'>
+                <span className='text-sm text-gray-600'>
+                  {subTaskData.orderName}
+                </span>
+              </td>
+
+              {/* Duration */}
+              <td className='py-2'>
+                <span className='text-sm text-gray-600'>
+                  24h
+                </span>
+              </td>
+
+              {/* Project Name */}
+              <td className='py-2'>
+                <span className='text-sm text-gray-600'>
+                  {task?.title}
+                </span>
+              </td>
+
+              {/* Status */}
+              <td className='py-2'>
+                <span
+                  className={clsx(
+                    SUBTASK_TYPE[subTaskData.status]?.background,
+                    "px-3 py-1 rounded-full",
+                    SUBTASK_TYPE[subTaskData.status]?.text
+                  )}
+                >
+                  {subTaskData.status}
+                </span>      
+              </td>
+
+              {/* Export */}
+              <td className='py-2'>
+                <button className="flex items-center text-sm text-gray-600 hover:text-blue-500">
+                  <MdAttachFile className="mr-1" />
+                  Download
+                </button>
+              </td>
+            </tr>
+          );
+        })}
+      </>
+    );
+  };
+
   return (
-    <>
-      <div className='bg-white  px-2 md:px-4 pt-4 pb-9 shadow-md rounded'>
-        <div className='overflow-x-auto'>
-          <table className='w-full '>
-            <TableHeader />
-            <tbody>
-              {tasks.map((task, index) => (
-                <TableRow key={index} task={task} />
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className='bg-white px-2 md:px-4 pt-4 pb-9 shadow-md rounded'>
+      <div className='overflow-x-auto'>
+        <table className='w-full'>
+          <TableHeader />
+          <tbody>
+            {tasks.map((task, index) => (
+              <TableRow key={index} task={task} selectedUserId={selectedUserId} />
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      {/* TODO */}
-      <ConfirmatioDialog
-        open={openDialog}
-        setOpen={setOpenDialog}
-        onClick={deleteHandler}
-      />
-
-      <AddTask
-        open={openEdit}
-        setOpen={setOpenEdit}
-        task={selected}
-        key={new Date().getTime()}
-      />
-    </>
+    </div>
   );
 };
 

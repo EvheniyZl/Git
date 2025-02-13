@@ -9,9 +9,9 @@ const localizer = momentLocalizer(moment);
 const CalendarView = ({ tasks }) => {
   const navigate = useNavigate();
 
-  // Маппинг цветов для разных типов задач
-  const getTaskBackgroundColor = (task) => {
-    switch (task.stage) {
+  // Маппинг цветов для разных типов задач и подзадач
+  const getTaskBackgroundColor = (stage) => {
+    switch (stage) {
       case 'todo':
         return "rgb(37 99 235 / var(--tw-bg-opacity))"; 
       case 'completed':
@@ -23,13 +23,28 @@ const CalendarView = ({ tasks }) => {
     }
   };
 
-  const events = tasks.map((task) => ({
-    title: task.title,
-    start: new Date(task.date),
-    end: new Date(task.date),
-    allDay: true,
-    onClick: () => navigate(`/task/${task._id}`), // This handles the click and navigates to the task details page
-  }));
+  // Создание массива событий для календаря
+  const events = tasks.flatMap((task) => {
+    const taskEvents = [{
+      title: task.title,
+      start: new Date(task.date),
+      end: new Date(task.date),
+      allDay: true,
+      onClick: () => navigate(`/task/${task._id}`),
+      stage: task.stage, // Добавляем стадию задачи
+    }];
+
+    const subTaskEvents = task.subTasks?.map((subTask) => ({
+      title: subTask.title, // Используем название подзадачи
+      start: new Date(subTask.date),
+      end: new Date(subTask.date),
+      allDay: true,
+      onClick: () => navigate(`/task/${task._id}`),
+      stage: subTask.stage, // Добавляем стадию подзадачи
+    })) || [];
+
+    return [...taskEvents, ...subTaskEvents];
+  });
 
   return (
     <div style={{ height: 500 }}>
@@ -41,8 +56,7 @@ const CalendarView = ({ tasks }) => {
         defaultView="month"
         onSelectEvent={(event) => event.onClick()}
         eventPropGetter={(event) => {
-          const task = tasks.find((task) => task.title === event.title); // Найти задачу по названию
-          const backgroundColor = getTaskBackgroundColor(task); // Получить цвет для задачи
+          const backgroundColor = getTaskBackgroundColor(event.stage); // Получить цвет для задачи или подзадачи
           return {
             style: {
               backgroundColor: backgroundColor, // Используем динамический цвет
@@ -55,7 +69,5 @@ const CalendarView = ({ tasks }) => {
     </div>
   );
 };
-
-
 
 export default CalendarView;
