@@ -205,40 +205,45 @@ export const dashboardStatistics = async (req, res) => {
 
 export const getTasks = async (req, res) => {
   try {
-      const { stage, isTrashed, userId } = req.query;
+    const { stage, isTrashed, userId } = req.query;
 
-      let query = { isTrashed: isTrashed ? true : false };
+    let query = { isTrashed: isTrashed ? true : false };
 
-      if (stage) {
-          query.stage = stage;
-      }
+    if (stage) {
+      query.stage = stage;
+    }
 
-      if (userId) {
-          query.team = { $in: [userId] }; // Фильтруем задачи, где пользователь находится в команде
-          query.subTasks = { team: { $in: [userId] } };  // Также фильтруем подзадачи по пользователю
-      }
+    if (userId) {
+      // Преобразуем userId в ObjectId
+      const userObjectId = new mongoose.Types.ObjectId(userId);
 
-      let queryResult = Task.find(query)
-          .populate({
-              path: "team",
-              select: "name title email",
-          })
-          .sort({ _id: -1 })
+      // Фильтруем задачи, где пользователь находится в команде или в подзадачах
+      query.$or = [
+        { team: { $in: [userObjectId] } },
+        { "subTasks.team": { $in: [userObjectId] } },
+      ];
+    }
 
-          .populate({
-            path: "subTasks.team", // Добавить populate для подзадач
-            select: "name title role email" // Замените на необходимые поля
-          }).sort({ _id: -1 });
-
-      const tasks = await queryResult;
-
-      res.status(200).json({
-          status: true,
-          tasks,
+    let queryResult = Task.find(query)
+      .populate({
+        path: "team",
+        select: "name title email",
+      })
+      .sort({ _id: -1 })
+      .populate({
+        path: "subTasks.team",
+        select: "name title role email",
       });
+
+    const tasks = await queryResult;
+
+    res.status(200).json({
+      status: true,
+      tasks,
+    });
   } catch (error) {
-      console.log(error);
-      return res.status(400).json({ status: false, message: error.message });
+    console.log(error);
+    return res.status(400).json({ status: false, message: error.message });
   }
 };
 
