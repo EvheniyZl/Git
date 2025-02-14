@@ -46,6 +46,38 @@ export const TASK_TYPE = {
   completed: "bg-green-600",
 };
 
+export const TASK_TYPE_TABLE = {
+  todo: {
+    background: "bg-blue-600/10",
+    text: "text-blue-700",
+  },
+  "in progress": {
+    background: "bg-yellow-600/10",
+    text: "text-yellow-700",
+  },
+  completed: {
+    background: "bg-green-600/10",
+    text: "text-green-700",
+  },
+};
+
+
+export const SUBTASK_TYPE = {
+  todo: {
+    background: "bg-blue-600/10",
+    text: "text-blue-700",
+  },
+  "in progress": {
+    background: "bg-yellow-600/10",
+    text: "text-yellow-700",
+  },
+  completed: {
+    background: "bg-green-600/10",
+    text: "text-green-700",
+  },
+};
+
+
 export const BGS = [
   "bg-blue-600",
   "bg-yellow-600",

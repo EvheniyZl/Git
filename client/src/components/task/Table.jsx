@@ -1,20 +1,12 @@
-import React, { useState } from "react";
-import { BiMessageAltDetail } from "react-icons/bi";
+import React from "react";
 import {
   MdAttachFile,
   MdKeyboardArrowDown,
   MdKeyboardArrowUp,
   MdKeyboardDoubleArrowUp,
 } from "react-icons/md";
-import { toast } from "sonner";
-import { BGS, PRIOTITYSTYELS, TASK_TYPE, formatDate, SUBTASK_TYPE } from "../../utils";
+import { TASK_TYPE_TABLE, formatDate } from "../../utils";
 import clsx from "clsx";
-import { FaList } from "react-icons/fa";
-import UserInfo from "../UserInfo";
-import Button from "../Button";
-import ConfirmatioDialog from "../Dialogs";
-import { useTrashTaskMutation } from "../../redux/slices/api/taskApiSlice";
-import AddTask from "./AddTask";
 
 const ICONS = {
   high: <MdKeyboardDoubleArrowUp />,
@@ -23,48 +15,17 @@ const ICONS = {
 };
 
 const Table = ({ tasks, selectedUserId }) => {
-  const [openDialog, setOpenDialog] = useState(false);
-  const [selected, setSelected] = useState(null);
-  const [openEdit, setOpenEdit] = useState(false);
-
-  const [trashTask] = useTrashTaskMutation();
-
-  const deleteClicks = (id) => {
-    setSelected(id);
-    setOpenDialog(true);
-  };
-
-  const editTaskHandler = (el) => {
-    setSelected(el);
-    setOpenEdit(true);
-  }
-
-  const deleteHandler = async () => {
-    try {
-      const result = await trashTask({
-        id: selected,
-        isTrashed: "trash",
-      }).unwrap();
-      toast.success(result?.message);
-      setTimeout(() => {
-        setOpenDialog(false);
-      }, 500);
-    } catch (error) {
-      console.log(error);
-      toast.error(error?.data?.message || error.error);
-    }
-  };
 
   const TableHeader = () => (
     <thead className='w-full border-b border-gray-300'>
       <tr className='w-full text-black text-left'>
-        <th className='py-2'>Date of Created</th>
-        <th className='py-2'>Applicant</th>
-        <th className='py-2'>Order Name</th>
-        <th className='py-2'>Duration</th>
-        <th className='py-2'>Project Name</th>
-        <th className='py-2'>Status</th>
-        <th className='py-2'>Export</th>
+        <th className='py-2 px-4'>Date of Created</th>
+        <th className='py-2 px-4'>Applicant</th>
+        <th className='py-2 px-4'>Order Name</th>
+        <th className='py-2 px-4'>Duration</th>
+        <th className='py-2 px-4'>Project Name</th>
+        <th className='py-2 px-4'>Status</th>
+        <th className='py-2 px-4'>Export</th>
       </tr>
     </thead>
   );
@@ -73,96 +34,107 @@ const Table = ({ tasks, selectedUserId }) => {
     const getAllApplicants = (team) => {
       return team.map(user => user.name).join(", ");
     };
-  
-    const getSubTaskData = (subTask) => {
-      return {
-        date: subTask?.date || task?.date,
-        applicant: selectedUserId
-          ? subTask?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name
-          : getAllApplicants(subTask?.team || task?.team),
-        orderName: "-",
-        status: subTask?.stage || task?.stage,
-      };
+
+    const calculateDuration = (activities, userId) => {
+      let totalDuration = 0; // Общая продолжительность в миллисекундах
+      let startTime = null; // Время начала задачи
+
+      // Проходим по всем активностям
+      activities.forEach(activity => {
+        if (activity.type === 'started' && (!userId || activity.by === userId)) {
+          // Если активность — "started" и соответствует выбранному пользователю (или пользователь не выбран)
+          startTime = new Date(activity.date); // Запоминаем время начала
+        } else if (activity.type === 'completed' && startTime && (!userId || activity.by === userId)) {
+          // Если активность — "completed" и есть время начала
+          const endTime = new Date(activity.date); // Получаем время завершения
+          totalDuration += endTime - startTime; // Добавляем разницу к общей продолжительности
+          startTime = null; // Сбрасываем время начала
+        }
+      });
+
+      return totalDuration; // Возвращаем общую продолжительность в миллисекундах
     };
-  
+
+    const formatDuration = (duration) => {
+      const hours = Math.floor(duration / (1000 * 60 * 60)); // Переводим миллисекунды в часы
+      const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60)); // Остаток в минуты
+      return `${hours}h ${minutes}m`; // Форматируем в "часы:минуты"
+    };
+
+    // Рассчитываем продолжительность для задачи
+    const duration = calculateDuration(task.activities, selectedUserId);
+    const formattedDuration = formatDuration(duration);
+
     return (
-      <>
-        {/* Подзадачи */}
-        {task?.subTasks?.map((subTask) => {
-          const subTaskData = getSubTaskData(subTask);
-          return (
-            <tr key={subTask._id} className='border-b border-gray-200 text-gray-600 hover:bg-gray-300/10'>
-              {/* Date of Created */}
-              <td className='py-2'>
-                <span className='text-sm text-gray-600'>
-                  {formatDate(new Date(subTaskData.date))}
-                </span>
-              </td>
-  
-              {/* Applicant */}
-              <td className='py-2'>
-                <span className='text-sm text-gray-600'>
-                  {subTaskData.applicant || "No team"}
-                </span>
-              </td>
-  
-              {/* Order Name */}
-              <td className='py-2'>
-                <span className='text-sm text-gray-600'>
-                  {subTaskData.orderName}
-                </span>
-              </td>
-  
-              {/* Duration */}
-              <td className='py-2'>
-                <span className='text-sm text-gray-600'>
-                  24h
-                </span>
-              </td>
-  
-              {/* Project Name */}
-              <td className='py-2'>
-                <span className='text-sm text-gray-600'>
-                  {task?.title}
-                  {/* Ссылка на задачу */}
-                  <a
-                    href={`/task/${task?._id}` }
-                    className="ml-2 text-blue-500 hover:underline"
-                    target="_blank"
-                  >
-                    Detail
-                  </a>
-                </span>
-              </td>
-  
-              {/* Status */}
-              <td className='py-2'>
-                <span
-                  className={clsx(
-                    SUBTASK_TYPE[subTaskData.status]?.background,
-                    "px-3 py-1 rounded-full",
-                    SUBTASK_TYPE[subTaskData.status]?.text
-                  )}
-                >
-                  {subTaskData.status}
-                </span>      
-              </td>
-  
-              {/* Export */}
-              <td className='py-2'>
-                <button className="flex items-center text-sm text-gray-600 hover:text-blue-500">
-                  <MdAttachFile className="mr-1" />
-                  Download
-                </button>
-              </td>
-            </tr>
-          );
-        })}
-      </>
+      <tr className='border-b border-gray-200 text-gray-600 hover:bg-gray-300/10'>
+        {/* Date of Created */}
+        <td className='py-2 px-4 whitespace-nowrap'>
+          <span className='text-sm text-gray-600'>
+            {formatDate(new Date(task?.date))}
+          </span>
+        </td>
+
+        {/* Applicant */}
+        <td className='py-2 px-4 whitespace-nowrap'>
+          <span className='text-sm text-gray-600'>
+            {selectedUserId
+              ? task?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name
+              : getAllApplicants(task?.team)}
+          </span>
+        </td>
+
+        {/* Order Name */}
+        <td className='py-2 px-4 whitespace-nowrap'>
+          <span className='text-sm text-gray-600'>
+            {task?.orderName || "-"}
+          </span>
+        </td>
+
+        {/* Duration */}
+        <td className='py-2 px-4 whitespace-nowrap'>
+          <span className='text-sm text-gray-600'>
+            {formattedDuration}
+          </span>
+        </td>
+
+        {/* Project Name */}
+        <td className='py-2 px-4 whitespace-nowrap'>
+          <span className='text-sm text-gray-600'>
+            {task?.title}
+            {/* Ссылка на задачу */}
+            <a
+              href={`/task/${task?._id}`}
+              className="ml-2 text-blue-500 hover:underline"
+              target="_blank"
+            >
+              Detail
+            </a>
+          </span>
+        </td>
+
+        {/* Status */}
+        <td className='py-2 px-4 whitespace-nowrap'>
+          <span
+            className={clsx(
+              TASK_TYPE_TABLE[task?.stage]?.background,
+              "px-3 py-1 rounded-full",
+              TASK_TYPE_TABLE[task?.stage]?.text
+            )}
+          >
+            {task?.stage}
+          </span>
+        </td>
+
+        {/* Export */}
+        <td className='py-2 px-4 whitespace-nowrap'>
+          <button className="flex items-center text-sm text-gray-600 hover:text-blue-500">
+            <MdAttachFile className="mr-1" />
+            Download
+          </button>
+        </td>
+      </tr>
     );
   };
-  
-  
 
   return (
     <div className='bg-white px-2 md:px-4 pt-4 pb-9 shadow-md rounded'>
