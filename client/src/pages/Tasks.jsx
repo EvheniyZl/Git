@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaList, FaRegCalendar } from "react-icons/fa";
-import { MdGridView } from "react-icons/md";
+import { MdGridView, MdAttachFile } from "react-icons/md"; // Добавлена иконка MdAttachFile
 import { useParams } from "react-router-dom";
 import Loading from "../components/Loader";
 import Title from "../components/Title";
@@ -85,13 +85,10 @@ const Tasks = () => {
         )}
       </div>
 
-      {/* Фильтры: пользователь и дата */}
+      {/* Фильтры: пользователь, дата и кнопка Download */}
       <div className="flex flex-wrap gap-4 mb-4">
         {/* Фильтр по пользователю */}
         <div className="flex-1 min-w-[200px]">
-          <label htmlFor="userFilter" className="mr-2">
-            Filter by user:
-          </label>
           <select
             id="userFilter"
             value={selectedUserId}
@@ -109,9 +106,6 @@ const Tasks = () => {
 
         {/* Фильтр по дате */}
         <div className="flex-1 min-w-[200px]">
-          <label htmlFor="dateFilter" className="mr-2">
-            Filter by date:
-          </label>
           <div className="flex flex-col sm:flex-row gap-2">
             <DatePicker
               selected={startDate}
@@ -134,6 +128,20 @@ const Tasks = () => {
             />
           </div>
         </div>
+      </div>
+
+      {/* Кнопка Download */}
+      <div className="mb-1">
+          <button
+            className="flex items-center text-sm text-gray-600 hover:text-blue-500"
+            onClick={() => {
+              // Логика для скачивания
+              console.log("Download button clicked");
+            }}
+          >
+            <MdAttachFile className="mr-1" />
+            Download all
+          </button>
       </div>
 
       {/* Табы и отображение задач */}
