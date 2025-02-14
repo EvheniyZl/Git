@@ -73,89 +73,20 @@ const Table = ({ tasks, selectedUserId }) => {
     const getAllApplicants = (team) => {
       return team.map(user => user.name).join(", ");
     };
-
+  
     const getSubTaskData = (subTask) => {
       return {
         date: subTask?.date || task?.date,
         applicant: selectedUserId
           ? subTask?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name
           : getAllApplicants(subTask?.team || task?.team),
-        orderName: subTask?.title || "-",
+        orderName: "-",
         status: subTask?.stage || task?.stage,
       };
     };
-
-    const subTaskData = task?.subTasks?.[0]
-      ? getSubTaskData(task?.subTasks[0])
-      : {
-          date: task?.date,
-          applicant: selectedUserId
-            ? task?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name || "No team"
-            : getAllApplicants(task?.team),
-          orderName: "-",
-          status: task?.stage || "No stage",
-        };
-
+  
     return (
       <>
-        <tr className='border-b border-gray-200 text-gray-600 hover:bg-gray-300/10'>
-          {/* Date of Created */}
-          <td className='py-2'>
-            <span className='text-sm text-gray-600'>
-              {formatDate(new Date(task?.date))}
-            </span>
-          </td>
-
-          {/* Applicant */}
-          <td className='py-2'>
-            <span className='text-sm text-gray-600'>
-              {selectedUserId
-                ? task?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name || "No team"
-                : getAllApplicants(task?.team)}
-            </span>
-          </td>
-
-          {/* Order Name */}
-          <td className='py-2'>
-            <span className='text-sm text-gray-600'>-</span>
-          </td>
-
-          {/* Duration */}
-          <td className='py-2'>
-            <span className='text-sm text-gray-600'>
-              24h
-            </span>
-          </td>
-
-          {/* Project Name */}
-          <td className='py-2'>
-            <span className='text-sm text-gray-600'>
-              {task?.title}
-            </span>
-          </td>
-
-          {/* Status */}
-          <td className='py-2'>
-            <span
-              className={clsx(
-                SUBTASK_TYPE[subTaskData.status]?.background,
-                "px-3 py-1 rounded-full",
-                SUBTASK_TYPE[subTaskData.status]?.text
-              )}
-            >
-              {subTaskData.status}
-            </span>   
-          </td>
-
-          {/* Export */}
-          <td className='py-2'>
-            <button className="flex items-center text-sm text-gray-600 hover:text-blue-500">
-              <MdAttachFile className="mr-1" />
-              Download
-            </button>
-          </td>
-        </tr>
-
         {/* Подзадачи */}
         {task?.subTasks?.map((subTask) => {
           const subTaskData = getSubTaskData(subTask);
@@ -167,35 +98,43 @@ const Table = ({ tasks, selectedUserId }) => {
                   {formatDate(new Date(subTaskData.date))}
                 </span>
               </td>
-
+  
               {/* Applicant */}
               <td className='py-2'>
                 <span className='text-sm text-gray-600'>
                   {subTaskData.applicant || "No team"}
                 </span>
               </td>
-
+  
               {/* Order Name */}
               <td className='py-2'>
                 <span className='text-sm text-gray-600'>
                   {subTaskData.orderName}
                 </span>
               </td>
-
+  
               {/* Duration */}
               <td className='py-2'>
                 <span className='text-sm text-gray-600'>
                   24h
                 </span>
               </td>
-
+  
               {/* Project Name */}
               <td className='py-2'>
                 <span className='text-sm text-gray-600'>
                   {task?.title}
+                  {/* Ссылка на задачу */}
+                  <a
+                    href={`/task/${task?._id}` }
+                    className="ml-2 text-blue-500 hover:underline"
+                    target="_blank"
+                  >
+                    Detail
+                  </a>
                 </span>
               </td>
-
+  
               {/* Status */}
               <td className='py-2'>
                 <span
@@ -208,7 +147,7 @@ const Table = ({ tasks, selectedUserId }) => {
                   {subTaskData.status}
                 </span>      
               </td>
-
+  
               {/* Export */}
               <td className='py-2'>
                 <button className="flex items-center text-sm text-gray-600 hover:text-blue-500">
@@ -222,6 +161,8 @@ const Table = ({ tasks, selectedUserId }) => {
       </>
     );
   };
+  
+  
 
   return (
     <div className='bg-white px-2 md:px-4 pt-4 pb-9 shadow-md rounded'>
