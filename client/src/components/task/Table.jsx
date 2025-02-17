@@ -2,7 +2,9 @@ import React from "react";
 import { MdAttachFile, MdKeyboardArrowDown, MdKeyboardArrowUp, MdKeyboardDoubleArrowUp } from "react-icons/md";
 import { TASK_TYPE_TABLE, formatDate } from "../../utils";
 import clsx from "clsx";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import * as XLSX from "xlsx"; // Импортируем библиотеку для работы с Excel
+import { saveAs } from "file-saver"; // Для скачивания файла
 
 const ICONS = {
   high: <MdKeyboardDoubleArrowUp />,
@@ -21,11 +23,68 @@ const calculateDuration = (activities, userId) => {
     } else if (activity.type === 'completed' && startTime && (!userId || activity.by === userId)) {
       const endTime = new Date(activity.date);
       totalDuration += endTime - startTime;
-      startTime = null;
+      startTime = null; // Сбрасываем startTime после завершения интервала
     }
   });
 
   return totalDuration;
+};
+
+const downloadReport = (tasks, selectedUserId) => {
+  const data = [];
+
+  tasks.forEach(task => {
+    let taskDuration = 0;
+    let startTime = null;
+
+    task.activities.forEach(activity => {
+      if (activity.type === 'started' && (!selectedUserId || activity.by === selectedUserId)) {
+        startTime = new Date(activity.date);
+      } else if (activity.type === 'completed' && startTime && (!selectedUserId || activity.by === selectedUserId)) {
+        const endTime = new Date(activity.date);
+        const duration = endTime - startTime;
+        taskDuration += duration;
+
+        const formattedDuration = new Date(duration).toISOString().substr(11, 8); // Форматируем продолжительность в часы и минуты
+
+        data.push({
+          "Applicant": selectedUserId ? task?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name : task?.team?.map(user => user.name).join(", "),
+          "Order Name": task?.orderName || "-",
+          "Activity Type": activity.type,
+          "Activity Time": formatDate(new Date(activity.date)),
+          "Duration": formattedDuration,
+          "Project Name": task?.title,
+          "Status": task?.stage,
+        });
+
+        startTime = null; // Сбрасываем startTime после завершения интервала
+      }
+    });
+
+    // Добавляем строку с суммарной продолжительностью задачи внизу
+    if (taskDuration > 0) {
+      const formattedDuration = new Date(taskDuration).toISOString().substr(11, 8);
+      data.push({
+        "Applicant": "",
+        "Order Name": "",
+        "Activity Type": "",
+        "Activity Time": "Total Duration",
+        "Duration": formattedDuration,
+        "Project Name": task?.title,
+        "Status": "",
+      });
+    }
+  });
+
+  // Создаем рабочую книгу
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "User Activities");
+
+  // Генерируем файл и сохраняем его
+  const fileName = selectedUserId ? `report_${selectedUserId}.xlsx` : "all_reports.xlsx";
+  const file = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  saveAs(new Blob([file]), fileName);
 };
 
 // Компонент для таблицы
@@ -40,7 +99,15 @@ const Table = ({ tasks, selectedUserId }) => {
         <th className='py-2 px-4'>Duration</th>
         <th className='py-2 px-4'>Project Name</th>
         <th className='py-2 px-4'>Status</th>
-        <th className='py-2 px-4'>Export</th>
+        <th className='py-2 px-4'>
+          <button 
+            className="flex items-center text-sm text-gray-600 hover:text-blue-500"
+            onClick={() => downloadReport(tasks, selectedUserId)}
+          >
+            <MdAttachFile className="mr-1" />
+            Download all
+          </button>
+        </th>
       </tr>
     </thead>
   );
@@ -87,7 +154,10 @@ const Table = ({ tasks, selectedUserId }) => {
           </span>
         </td>
         <td className='py-2 px-4 whitespace-nowrap'>
-          <button className="flex items-center text-sm text-gray-600 hover:text-blue-500">
+          <button 
+            className="flex items-center text-sm text-gray-600 hover:text-blue-500"
+            onClick={() => downloadReport([task], selectedUserId)}
+          >
             <MdAttachFile className="mr-1" /> Download
           </button>
         </td>

@@ -15,7 +15,7 @@ import { RxActivityLog } from "react-icons/rx";
 import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import Tabs from "../components/Tabs";
-import { PRIOTITYSTYELS, TASK_TYPE, SUBTASK_TYPE, getInitials } from "../utils";
+import { TASK_TYPE, SUBTASK_TYPE, getInitials } from "../utils";
 import Loading from "../components/Loader";
 import Button from "../components/Button";
 import { useGetSingleTaskQuery, usePostTaskActivityMutation, useUpdateActivityMutation, useDeleteActivityMutation } from "../redux/slices/api/taskApiSlice";

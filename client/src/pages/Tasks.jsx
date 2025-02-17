@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaList, FaRegCalendar } from "react-icons/fa";
-import { MdGridView, MdAttachFile } from "react-icons/md"; // Добавлена иконка MdAttachFile
+import { MdGridView, MdNoteAlt, MdAttachFile } from "react-icons/md"; // Добавлена иконка MdAttachFile
 import { useParams } from "react-router-dom";
 import Loading from "../components/Loader";
 import Title from "../components/Title";
@@ -15,11 +15,13 @@ import CalendarView from "../components/task/CalendarView";
 import { useGetTeamListQuery } from "../redux/slices/api/userApiSlice";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Notice from "../components/task/Notice";
 
 const TABS = [
   { title: "Board View", icon: <MdGridView /> },
   { title: "List View", icon: <FaList /> },
   { title: "Calendar View", icon: <FaRegCalendar /> },
+  { title: "Notice", icon: <MdNoteAlt /> },  // Добавляем вкладку Notice
 ];
 
 const TASK_TYPE = {
@@ -149,11 +151,11 @@ const Tasks = () => {
         {selected === 0 ? (
           <BoardView tasks={filteredTasks} />
         ) : selected === 1 ? (
-          <div className="w-full">
-            <Table tasks={filteredTasks} selectedUserId={selectedUserId} />
-          </div>
-        ) : (
+          <Table tasks={filteredTasks} selectedUserId={selectedUserId} />
+        ) : selected === 2 ? (
           <CalendarView tasks={filteredTasks} />
+        ) : (
+          <Notice tasks={filteredTasks} />  // Добавляем отображение Notice
         )}
       </Tabs>
 
