@@ -1,16 +1,12 @@
 import React from "react";
-import { MdAttachFile, MdKeyboardArrowDown, MdKeyboardArrowUp, MdKeyboardDoubleArrowUp } from "react-icons/md";
+import { MdAttachFile} from "react-icons/md";
 import { TASK_TYPE_TABLE, formatDate } from "../../utils";
 import clsx from "clsx";
 import { XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
-import * as XLSX from "xlsx"; // Импортируем библиотеку для работы с Excel
-import { saveAs } from "file-saver"; // Для скачивания файла
+import pdfMake from 'pdfmake/build/pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
 
-const ICONS = {
-  high: <MdKeyboardDoubleArrowUp />,
-  medium: <MdKeyboardArrowUp />,
-  low: <MdKeyboardArrowDown />,
-};
+pdfMake.vfs = pdfFonts;
 
 // Функция для вычисления продолжительности
 const calculateDuration = (activities, userId) => {
@@ -30,61 +26,84 @@ const calculateDuration = (activities, userId) => {
   return totalDuration;
 };
 
-const downloadReport = (tasks, selectedUserId) => {
-  const data = [];
-
-  tasks.forEach(task => {
-    let taskDuration = 0;
-    let startTime = null;
-
-    task.activities.forEach(activity => {
-      if (activity.type === 'started' && (!selectedUserId || activity.by === selectedUserId)) {
-        startTime = new Date(activity.date);
-      } else if (activity.type === 'completed' && startTime && (!selectedUserId || activity.by === selectedUserId)) {
-        const endTime = new Date(activity.date);
-        const duration = endTime - startTime;
-        taskDuration += duration;
-
-        const formattedDuration = new Date(duration).toISOString().substr(11, 8); // Форматируем продолжительность в часы и минуты
-
-        data.push({
-          "Applicant": selectedUserId ? task?.team?.find(user => user._id === selectedUserId)?.name || task?.team?.[0]?.name : task?.team?.map(user => user.name).join(", "),
-          "Order Name": task?.orderName || "-",
-          "Activity Type": activity.type,
-          "Activity Time": formatDate(new Date(activity.date)),
-          "Duration": formattedDuration,
-          "Project Name": task?.title,
-          "Status": task?.stage,
-        });
-
-        startTime = null; // Сбрасываем startTime после завершения интервала
-      }
+const generatePDF = (tasks, selectedUserId) => {
+  const filteredActivities = tasks.reduce((acc, task) => {
+    const userActivities = task.activities.filter(activity => {
+      return !selectedUserId || activity.by === selectedUserId;
     });
 
-    // Добавляем строку с суммарной продолжительностью задачи внизу
-    if (taskDuration > 0) {
-      const formattedDuration = new Date(taskDuration).toISOString().substr(11, 8);
-      data.push({
-        "Applicant": "",
-        "Order Name": "",
-        "Activity Type": "",
-        "Activity Time": "Total Duration",
-        "Duration": formattedDuration,
-        "Project Name": task?.title,
-        "Status": "",
+    if (userActivities.length > 0) {
+      acc.push({
+        title: task.title,
+        activities: userActivities,
       });
     }
-  });
 
-  // Создаем рабочую книгу
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "User Activities");
+    return acc;
+  }, []);
 
-  // Генерируем файл и сохраняем его
-  const fileName = selectedUserId ? `report_${selectedUserId}.xlsx` : "all_reports.xlsx";
-  const file = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  saveAs(new Blob([file]), fileName);
+  // Расчёт общего времени
+  const totalDuration = tasks.reduce((acc, task) => {
+    return acc + calculateDuration(task.activities, selectedUserId);
+  }, 0);
+
+  const formatDuration = (duration) => {
+    const hours = Math.floor(duration / (1000 * 60 * 60));
+    const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m`;
+  };
+
+  const formattedTotalDuration = formatDuration(totalDuration);
+
+  const documentDefinition = {
+    content: [
+      { text: 'Activities Report', style: 'header' },
+      ...filteredActivities.map(task => ({
+        text: `Project Name: ${task.title}`,
+        style: 'subheader',
+        margin: [0, 10, 0, 5],
+      })),
+      ...filteredActivities.flatMap(task =>
+        task.activities.map(activity => ({
+          text: [
+            { text: `Activity Type: ${activity.type}\n`, style: 'activity' },
+            { text: `Activity: ${activity.activity}\n`, style: 'activity' },
+            { text: `Date: ${new Date(activity.date).toLocaleString()}\n`, style: 'activity' },
+          ],
+          margin: [0, 0, 0, 10],
+        }))
+      ),
+      // Добавление информации о затраченном времени
+      {
+        text: `Total Time Spent: ${formattedTotalDuration}`,
+        style: 'footer',
+        margin: [0, 20, 0, 0],
+      },
+    ],
+    styles: {
+      header: {
+        fontSize: 18,
+        bold: true,
+        margin: [0, 0, 0, 10],
+      },
+      subheader: {
+        fontSize: 14,
+        bold: true,
+        margin: [0, 10, 0, 5],
+      },
+      activity: {
+        fontSize: 12,
+        margin: [0, 0, 0, 5],
+      },
+      footer: {
+        fontSize: 14,
+        italics: true,
+        margin: [0, 10, 0, 0],
+      },
+    },
+  };
+
+  pdfMake.createPdf(documentDefinition).download('activities_report.pdf');
 };
 
 // Компонент для таблицы
@@ -100,13 +119,12 @@ const Table = ({ tasks, selectedUserId }) => {
         <th className='py-2 px-4'>Project Name</th>
         <th className='py-2 px-4'>Status</th>
         <th className='py-2 px-4'>
-          <button 
-            className="flex items-center text-sm text-gray-600 hover:text-blue-500"
-            onClick={() => downloadReport(tasks, selectedUserId)}
-          >
-            <MdAttachFile className="mr-1" />
-            Download all
-          </button>
+        <button
+          onClick={() => generatePDF(tasks, selectedUserId)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-md"
+        >
+          Download PDF
+        </button>
         </th>
       </tr>
     </thead>
@@ -156,7 +174,7 @@ const Table = ({ tasks, selectedUserId }) => {
         <td className='py-2 px-4 whitespace-nowrap'>
           <button 
             className="flex items-center text-sm text-gray-600 hover:text-blue-500"
-            onClick={() => downloadReport([task], selectedUserId)}
+            onClick={() => generatePDF([task], selectedUserId)}
           >
             <MdAttachFile className="mr-1" /> Download
           </button>
