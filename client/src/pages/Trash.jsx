@@ -107,7 +107,6 @@ const Trash = () => {
     <thead className='border-b border-gray-300'>
       <tr className='text-black  text-left'>
         <th className='py-2'>Task Title</th>
-        <th className='py-2'>Priority</th>
         <th className='py-2'>Stage</th>
         <th className='py-2 line-clamp-1'>Modified On</th>
       </tr>
@@ -124,15 +123,6 @@ const Trash = () => {
           <p className='w-full line-clamp-2 text-base text-black'>
             {item?.title}
           </p>
-        </div>
-      </td>
-
-      <td className='py-2 capitalize'>
-        <div className={"flex gap-1 items-center"}>
-          <span className={clsx("text-lg", PRIOTITYSTYELS[item?.priority])}>
-            {ICONS[item?.priority]}
-          </span>
-          <span className=''>{item?.priority}</span>
         </div>
       </td>
 

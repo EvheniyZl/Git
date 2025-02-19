@@ -4,12 +4,8 @@ import React, { useState } from "react";
 import { FaBug, FaTasks, FaThumbsUp, FaUser } from "react-icons/fa";
 import { GrInProgress } from "react-icons/gr";
 import {
-  MdKeyboardArrowDown,
-  MdKeyboardArrowUp,
-  MdKeyboardDoubleArrowUp,
   MdOutlineDoneAll,
   MdOutlineMessage,
-  MdTaskAlt,
 } from "react-icons/md";
 import { RxActivityLog } from "react-icons/rx";
 import { useParams } from "react-router-dom";
@@ -20,25 +16,8 @@ import Loading from "../components/Loader";
 import Button from "../components/Button";
 import { useGetSingleTaskQuery, usePostTaskActivityMutation, useUpdateActivityMutation, useDeleteActivityMutation } from "../redux/slices/api/taskApiSlice";
 import UserInfo from "../components/UserInfo";
-
-const assets = [
-  "https://images.pexels.com/photos/2418664/pexels-photo-2418664.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-  "https://images.pexels.com/photos/8797307/pexels-photo-8797307.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-  "https://images.pexels.com/photos/2534523/pexels-photo-2534523.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-  "https://images.pexels.com/photos/804049/pexels-photo-804049.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-];
-
-const ICONS = {
-  high: <MdKeyboardDoubleArrowUp />,
-  medium: <MdKeyboardArrowUp />,
-  low: <MdKeyboardArrowDown />,
-};
-
-const bgColor = {
-  high: "bg-red-200",
-  medium: "bg-yellow-200",
-  low: "bg-blue-200",
-};
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const TABS = [
   { title: "Task Detail", icon: <FaTasks /> },
@@ -57,16 +36,6 @@ const TASKTYPEICON = {
     </div>
   ),
   assigned: (
-    <div className='w-6 h-6 flex items-center justify-center rounded-full bg-gray-500 text-white'>
-      <FaUser size={14} />
-    </div>
-  ),
-  "subtask added": (
-    <div className='w-6 h-6 flex items-center justify-center rounded-full bg-gray-500 text-white'>
-      <FaUser size={14} />
-    </div>
-  ),
-  "subtask updated": (
     <div className='w-6 h-6 flex items-center justify-center rounded-full bg-gray-500 text-white'>
       <FaUser size={14} />
     </div>
@@ -111,7 +80,7 @@ const TaskDetails = () => {
     );
 
   return (
-    <div className='w-full flex flex-col gap-3 mb-4 overflow-y-hidden'>
+    <div id="activities-container" className='w-full flex flex-col gap-3 mb-4 overflow-y-hidden'>
       <h1 className='text-2xl text-gray-600 font-bold'>{task?.title}</h1>
 
       <Tabs tabs={TABS} setSelected={setSelected}>
@@ -121,17 +90,6 @@ const TaskDetails = () => {
               {/* LEFT */}
               <div className='w-full md:w-1/2 space-y-8'>
                 <div className='flex items-center gap-5'>
-                  {/* <div
-                    className={clsx(
-                      "flex gap-1 items-center text-base font-semibold px-3 py-1 rounded-full",
-                      PRIOTITYSTYELS[task?.priority],
-                      bgColor[task?.priority]
-                    )}
-                  >
-                    <span className='text-lg'>{ICONS[task?.priority]}</span>
-                    <span className='uppercase'>{task?.priority} Priority</span>
-                  </div> */}
-
                   <div className={clsx("flex items-center gap-2")}>
                     <div
                       className={clsx(
@@ -144,20 +102,13 @@ const TaskDetails = () => {
                 </div>
 
                 <p className='text-gray-500'>
-                  Created At: {new Date(task?.createdAt).toLocaleString('ru-RU')} (UTC+2)
+                  Created At: {new Date(task?.createdAt).toLocaleString('ru-RU')}
                 </p>
 
-                <div className='flex items-center gap-8 p-4 border-y border-gray-200'>
+                <div>
                   <div className='space-x-2'>
                     <span className='font-semibold'>Assets :</span>
                     <span>{task?.assets?.length}</span>
-                  </div>
-
-                  <span className='text-gray-400'>|</span>
-
-                  <div className='space-x-2'>
-                    <span className='font-semibold'>Sub-Task :</span>
-                    <span>{task?.subTasks?.length}</span>
                   </div>
                 </div>
 
@@ -187,42 +138,6 @@ const TaskDetails = () => {
                       </div>
                     ))}
                   </div>
-
-                  <p className="text-gray-500 font-semibold text-sm">SUB-TASKS</p>
-                <div className="space-y-8">
-                  {task?.subTasks?.map((el, index) => (
-                    <div key={index} className="flex gap-3">
-                      <div className="space-y-1">
-                        <div className="flex gap-2 items-center">
-                          <span className="text-sm text-gray-500">
-                            {new Date(el?.date).toDateString()}
-                          </span>
-                          <span
-                            className={clsx(
-                              SUBTASK_TYPE[el?.stage]?.background,
-                              "px-3 py-1 rounded-full",
-                              SUBTASK_TYPE[el?.stage]?.text
-                            )}
-                          >
-                            {el?.stage}
-                          </span>
-                          {/* Displaying Team for Subtask */}
-                        <div className="flex gap-3 mt-2">
-                          {el?.team?.map((member, index) => (
-                            <div
-                              key={index}
-                              className="w-8 h-8 rounded-full flex items-center justify-center bg-blue-500 text-white text-sm"
-                            >
-                              <UserInfo user={member} />
-                            </div>
-                          ))}
-                        </div>
-                        </div>
-                        <p className="text-gray-700">{el?.title}</p>     
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
               {/* RIGHT */}
               <div className='w-full md:w-1/2 space-y-8'>
@@ -315,6 +230,51 @@ const Activities = ({ activity, id, refetch }) => {
     }
   };
 
+  const handleDownloadPdf = () => {
+    const input = document.getElementById("activities-container");
+    const buttons = document.querySelectorAll('button');  // или выбери по более точному селектору, если это необходимо
+  
+    buttons.forEach(button => button.style.display = "none");
+  
+    if (!input) {
+      console.error("Element with id 'activities-container' not found.");
+      toast.error("Failed to generate PDF: Element not found.");
+      return;
+    }
+  
+    html2canvas(input, { scale: 2 })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4");
+        const imgWidth = 210; // A4 width in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        
+        // Если изображение превышает высоту страницы, разбиваем на несколько страниц
+        const pageHeight = 297; // A4 height in mm
+        let currentHeight = 0;
+  
+        // Добавление первой страницы
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        currentHeight += imgHeight;
+  
+        // Добавление последующих страниц, если контента больше одной страницы
+        while (currentHeight > pageHeight) {
+          pdf.addPage();
+          currentHeight = 0;
+          pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        }
+  
+        pdf.save("activities.pdf");
+        buttons.forEach(button => button.style.display = "block");
+      })
+      .catch((error) => {
+        console.error("Error generating PDF:", error);
+        toast.error("Failed to generate PDF.");
+        buttons.forEach(button => button.style.display = "block");
+      });
+  };
+  
+
   const Card = ({ item }) => {
     return (
       <div className='flex space-x-4'>
@@ -331,7 +291,7 @@ const Activities = ({ activity, id, refetch }) => {
           <p className='font-semibold'>{item?.by?.name}</p>
           <div className='text-gray-500 space-y-2'>
             <span className='capitalize'>{item?.type} </span>
-            <span className='text-sm'>{moment(item?.date).fromNow()} (UTC+2)</span>
+            <span className='text-sm'>{moment(item?.date).fromNow()}</span>
           </div>
           {editActivityId === item._id ? (
             <div className='flex gap-2'>
@@ -375,7 +335,15 @@ const Activities = ({ activity, id, refetch }) => {
   return (
     <div className='w-full gap-10 2xl:gap-20 min-h-screen px-10 py-8 bg-white shadow rounded-md justify-between overflow-y-auto'>
       <div className='w-full md:w-1/1'>
-        <h4 className='text-gray-600 font-semibold text-lg mb-5'>Activities</h4>
+      <div className='flex justify-between items-center'>
+    <h4 className='text-gray-600 font-semibold text-lg mb-5'>Activities</h4>
+    <Button
+      type='button'
+      label='Download PDF'
+      onClick={handleDownloadPdf}
+      className='bg-green-600 text-white rounded mt-5'
+    />
+  </div>
 
         <div className='w-full'>
           {activity?.map((el, index) => (

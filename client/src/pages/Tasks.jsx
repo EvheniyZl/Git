@@ -132,20 +132,6 @@ const Tasks = () => {
         </div>
       </div>
 
-      {/* Кнопка Download */}
-      <div className="mb-1">
-          <button
-            className="flex items-center text-sm text-gray-600 hover:text-blue-500"
-            onClick={() => {
-              // Логика для скачивания
-              console.log("Download button clicked");
-            }}
-          >
-            <MdAttachFile className="mr-1" />
-            Download all
-          </button>
-      </div>
-
       {/* Табы и отображение задач */}
       <Tabs tabs={TABS} setSelected={setSelected}>
         {selected === 0 ? (

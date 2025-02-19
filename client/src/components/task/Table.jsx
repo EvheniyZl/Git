@@ -27,25 +27,18 @@ const calculateDuration = (activities, userId) => {
 };
 
 const generatePDF = (tasks, selectedUserId) => {
-  const filteredActivities = tasks.reduce((acc, task) => {
+  const filteredTasks = tasks.map(task => {
     const userActivities = task.activities.filter(activity => {
       return !selectedUserId || activity.by === selectedUserId;
     });
 
-    if (userActivities.length > 0) {
-      acc.push({
-        title: task.title,
-        activities: userActivities,
-      });
-    }
-
-    return acc;
-  }, []);
-
-  // Расчёт общего времени
-  const totalDuration = tasks.reduce((acc, task) => {
-    return acc + calculateDuration(task.activities, selectedUserId);
-  }, 0);
+    return {
+      title: task.title,
+      activities: userActivities,
+      team: task.team,
+      duration: calculateDuration(task.activities, selectedUserId),
+    };
+  }).filter(task => task.activities.length > 0);
 
   const formatDuration = (duration) => {
     const hours = Math.floor(duration / (1000 * 60 * 60));
@@ -53,29 +46,25 @@ const generatePDF = (tasks, selectedUserId) => {
     return `${hours}h ${minutes}m`;
   };
 
-  const formattedTotalDuration = formatDuration(totalDuration);
-
   const documentDefinition = {
     content: [
       { text: 'Activities Report', style: 'header' },
-      ...filteredActivities.map(task => ({
-        text: `Project Name: ${task.title}`,
-        style: 'subheader',
-        margin: [0, 10, 0, 5],
-      })),
-      ...filteredActivities.flatMap(task =>
-        task.activities.map(activity => ({
+      ...filteredTasks.flatMap(task => [
+        { text: `Task: ${task.title}`, style: 'subheader', margin: [0, 10, 0, 5] },
+        { text: `Time Spent: ${formatDuration(task.duration)}`, style: 'subheader', margin: [0, 0, 0, 10] },
+        ...task.activities.map(activity => ({
           text: [
             { text: `Activity Type: ${activity.type}\n`, style: 'activity' },
             { text: `Activity: ${activity.activity}\n`, style: 'activity' },
             { text: `Date: ${new Date(activity.date).toLocaleString()}\n`, style: 'activity' },
+            { text: `User: ${task.team.find(user => user._id === activity.by)?.name || 'Unknown'}\n`, style: 'activity' },
           ],
           margin: [0, 0, 0, 10],
-        }))
-      ),
-      // Добавление информации о затраченном времени
+        })),
+        { text: '', margin: [0, 0, 0, 20] }, // Пустая строка для разделения задач
+      ]),
       {
-        text: `Total Time Spent: ${formattedTotalDuration}`,
+        text: `Total Time Spent: ${formatDuration(filteredTasks.reduce((acc, task) => acc + task.duration, 0))}`,
         style: 'footer',
         margin: [0, 20, 0, 0],
       },
@@ -103,7 +92,11 @@ const generatePDF = (tasks, selectedUserId) => {
     },
   };
 
-  pdfMake.createPdf(documentDefinition).download('activities_report.pdf');
+  const fileName = selectedUserId
+    ? `${tasks[0].title}_activities_report_${tasks[0].team.find(user => user._id === selectedUserId)?.name || 'Unknown'}.pdf`
+    : 'activities_report.pdf';
+
+  pdfMake.createPdf(documentDefinition).download(fileName);
 };
 
 // Компонент для таблицы
@@ -123,7 +116,7 @@ const Table = ({ tasks, selectedUserId }) => {
           onClick={() => generatePDF(tasks, selectedUserId)}
           className="bg-blue-600 text-white px-4 py-2 rounded-md"
         >
-          Download PDF
+          Download All
         </button>
         </th>
       </tr>

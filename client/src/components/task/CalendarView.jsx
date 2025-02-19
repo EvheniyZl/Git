@@ -34,16 +34,7 @@ const CalendarView = ({ tasks }) => {
       stage: task.stage, // Добавляем стадию задачи
     }];
 
-    const subTaskEvents = task.subTasks?.map((subTask) => ({
-      title: subTask.title, // Используем название подзадачи
-      start: new Date(subTask.date),
-      end: new Date(subTask.date),
-      allDay: true,
-      onClick: () => navigate(`/task/${task._id}`),
-      stage: subTask.stage, // Добавляем стадию подзадачи
-    })) || [];
-
-    return [...taskEvents, ...subTaskEvents];
+    return [...taskEvents];
   });
 
   return (

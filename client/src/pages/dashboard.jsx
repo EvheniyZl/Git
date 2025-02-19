@@ -27,7 +27,7 @@ const TaskTable = ({ tasks }) => {
     <thead className='border-b border-gray-300 '>
       <tr className='text-black text-left'>
         <th className='py-2'>Task Title</th>
-        <th className='py-2'>Priority</th>
+        <th className='py-2'>Stage</th>
         <th className='py-2'>Team</th>
         <th className='py-2 hidden md:block'>Created At</th>
       </tr>
@@ -48,10 +48,7 @@ const TaskTable = ({ tasks }) => {
 
       <td className='py-2'>
         <div className='flex gap-1 items-center'>
-          <span className={clsx("text-lg", PRIOTITYSTYELS[task.priority])}>
-            {ICONS[task.priority]}
-          </span>
-          <span className='capitalize'>{task.priority}</span>
+          <span className='capitalize'>{task.stage}</span>
         </div>
       </td>
 
@@ -176,13 +173,13 @@ const Dashboard = () => {
       lastMonthCount: getLastMonthTasksCount(data?.last10Task || []),
     },
     {
-      _id: "2",
-      label: "COMPLTED TASK",
-      total: totals["completed"] || 0,
-      icon: <MdAdminPanelSettings />,
-      bg: "bg-[#0f766e]",
-      lastMonthCount: getLastMonthTasksCount(data?.last10Task.filter(task => task.stage === "completed") || []),
-    },
+      _id: "4",
+      label: "TODOS",
+      total: totals["todo"]  || 0,
+      icon: <FaArrowsToDot />,
+      bg: "bg-[#be185d]" || 0,
+      lastMonthCount: getLastMonthTasksCount(data?.last10Task.filter(task => task.stage === "todo") || []),
+      },
     {
       _id: "3",
       label: "TASK IN PROGRESS ",
@@ -192,12 +189,12 @@ const Dashboard = () => {
       lastMonthCount: getLastMonthTasksCount(data?.last10Task.filter(task => task.stage === "in progress") || []),
     },
     {
-      _id: "4",
-      label: "TODOS",
-      total: totals["todo"]  || 0,
-      icon: <FaArrowsToDot />,
-      bg: "bg-[#be185d]" || 0,
-      lastMonthCount: getLastMonthTasksCount(data?.last10Task.filter(task => task.stage === "todo") || []),
+      _id: "2",
+      label: "COMPLETED TASK",
+      total: totals["completed"] || 0,
+      icon: <MdAdminPanelSettings />,
+      bg: "bg-[#0f766e]",
+      lastMonthCount: getLastMonthTasksCount(data?.last10Task.filter(task => task.stage === "completed") || []),
     },
   ];
 
@@ -231,9 +228,15 @@ const Dashboard = () => {
 
       <div className='w-full bg-white my-16 p-4 rounded shadow-sm'>
         <h4 className='text-xl text-gray-600 font-semibold'>
-          Chart by Priority
+          Chart by Task Type
         </h4>
-        <Chart data={data?.graphData} />
+        <Chart 
+          data={[
+            { name: 'Todo', total: totals["todo"] || 0 },
+            { name: 'In Progress', total: totals["in progress"] || 0 },
+            { name: 'Completed', total: totals["completed"] || 0 }
+          ]} 
+        />
       </div>
 
       <div className='w-full flex flex-col md:flex-row gap-4 2xl:gap-10 py-8'>
