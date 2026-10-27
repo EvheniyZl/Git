@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Політика приватності Lecture Recorder для доступу до YouTube API.">
+  <title>Політика приватності - Lecture Recorder</title>
+  <style>
+    :root{color-scheme:light;--ink:#16222d;--muted:#526475;--accent:#1275a1;--bg:#f5f8fa}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 system-ui,-apple-system,Segoe UI,sans-serif}
+    main{max-width:740px;margin:0 auto;padding:clamp(28px,7vw,72px) 24px}h1{font-size:clamp(2rem,5vw,3rem);line-height:1.15;letter-spacing:-.03em;margin:0 0 22px}
+    h2{font-size:1.25rem;margin:34px 0 8px}p,li{margin:0 0 13px}ul{padding-left:24px}small,.muted{color:var(--muted)}a{color:var(--accent);text-underline-offset:3px}
+    footer{border-top:1px solid #dbe5ea;padding-top:20px;margin-top:48px;font-size:.9rem}
+  </style>
+</head>
+<body><main>
+  <p><a href="/">← Lecture Recorder</a></p>
+  <h1>Політика приватності</h1>
+  <p class="muted">Оновлено: 27 жовтня 2026 року</p>
+  <p>Lecture Recorder - особистий інструмент для автоматичного запису онлайн-лекцій і трансляцій на YouTube. Ця сторінка описує використання даних Google та YouTube.</p>
+  <h2>Який доступ запитується</h2>
+  <p>Застосунок запитує доступ <code>youtube.force-ssl</code> через Google OAuth. Він читає дані YouTube-каналу та стан трансляцій, створює й налаштовує ефіри і потоки, запускає, завершує та прибирає тестові ефіри. Дозвіл надає власник каналу.</p>
+  <h2>Як використовуються й зберігаються дані</h2>
+  <ul>
+    <li>Токен оновлення OAuth зберігається в локальному файлі на пристрої, де працює контролер, з обмеженим доступом.</li>
+    <li>Дані ефірів та їхні посилання використовуються для керування трансляцією та повідомлень власнику в Telegram і групі лекції.</li>
+    <li>Локальна база контролера зберігає стан запланованих пар і посилання на створені ефіри до їхнього видалення під час обслуговування.</li>
+  </ul>
+  <h2>Передавання та видалення</h2>
+  <p>Дані передаються Google/YouTube для роботи API. Посилання на ефір можуть надсилатися через Telegram власнику й учасникам групи лекції. Власник може відкликати дозвіл у <a href="https://myaccount.google.com/permissions">налаштуваннях доступу Google</a> та попросити видалити локальні дані через <a href="https://github.com/EvheniyZl/EvheniyZl.github.io/issues">GitHub Issues</a>. Тестові ефіри видаляються після завершення перевірки; записи лекцій керуються власником каналу через YouTube.</p>
+  <h2>Зв'язок</h2>
+  <p>Питання про дані цього інструмента можна надіслати через <a href="https://github.com/EvheniyZl/EvheniyZl.github.io/issues">GitHub Issues</a>.</p>
+  <footer><small><a href="/">Головна</a> · Lecture Recorder</small></footer>
+</main></body></html>
